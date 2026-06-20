@@ -17,7 +17,7 @@
 <body class="bg-slate-50">
     <div id="root"></div>
 
-    <!-- Babel設定：jsx-runtimeエラーを回避するため、従来の変換モードを登録 -->
+    <!-- Babel設定 -->
     <script>
         Babel.registerPreset('react-classic', {
             presets: [
@@ -26,28 +26,32 @@
         });
     </script>
 
-    <!-- アプリケーションのコード（data-presets="react-classic" を指定） -->
+    <!-- アプリケーションのコード -->
     <script type="text/babel" data-type="module" data-presets="react-classic">
-        // Firebaseモジュールのインポート (認証モジュールを追加)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
         const { useState, useEffect, useMemo } = React;
 
         // =====================================================================
-        // Canvas環境の自動設定を利用（先生側でのAPIキー設定は不要になります）
+        // 環境判定（プレビュー画面か、GitHub本番環境か）
         // =====================================================================
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-              apiKey: "AIzaSyCar5BfWLpkeMZY3CvQXWPafMcy7-3j0Ao",
-              authDomain: "mendelapp-e8546.firebaseapp.com",
-              projectId: "mendelapp-e8546",
-              storageBucket: "mendelapp-e8546.firebasestorage.app",
-              messagingSenderId: "440177963313",
-              appId: "1:440177963313:web:4a022fa480f2217aeb0010",
-              measurementId: "G-C25DKNRWGJ"
+        const isCanvasEnv = typeof __firebase_config !== 'undefined' && typeof __app_id !== 'undefined';
+
+        // 先生のFirebase設定情報（合鍵）
+        const myFirebaseConfig = {
+            apiKey: "AIzaSyCar5BfWLpkeMZY3CvQXWPafMcy7-3j0Ao",
+            authDomain: "mendelapp-e8546.firebaseapp.com",
+            projectId: "mendelapp-e8546",
+            storageBucket: "mendelapp-e8546.firebasestorage.app",
+            messagingSenderId: "440177963313",
+            appId: "1:440177963313:web:4a022fa480f2217aeb0010"
         };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // 環境に応じて設定を自動切り替え
+        const firebaseConfig = isCanvasEnv ? JSON.parse(__firebase_config) : myFirebaseConfig;
+        const currentAppId = isCanvasEnv ? __app_id : "matsumoto-mendel-1";
 
         // Firebaseの初期化
         const app = initializeApp(firebaseConfig);
@@ -62,18 +66,19 @@
             const [allData, setAllData] = useState([]);
             const [error, setError] = useState(null);
 
-            // 1. 認証プロセスの追加（Canvasセキュリティ要件）
+            // 1. 認証プロセス
             useEffect(() => {
                 const initAuth = async () => {
                     try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        // プレビュー環境用と本番環境（GitHub）用で認証方式を自動切替
+                        if (isCanvasEnv && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await signInWithCustomToken(auth, __initial_auth_token);
                         } else {
                             await signInAnonymously(auth);
                         }
                     } catch (e) {
-                        console.error("認証エラー:", e);
-                        setError("認証に失敗しました。");
+                        console.error("認証エラー詳細:", e);
+                        setError(`認証エラー: ${e.message}。Firebaseで「匿名認証」が有効になっているか、ドメインが許可されているか確認してください。`);
                     }
                 };
                 initAuth();
@@ -82,11 +87,11 @@
                 return () => unsubscribe();
             }, []);
 
-            // 2. リアルタイム同期（指定された厳密なパスを使用）
+            // 2. リアルタイム同期
             useEffect(() => {
-                if (!user) return; // 認証されるまで待機
+                if (!user) return; // ログイン完了まで待つ
 
-                const dataRef = collection(db, 'artifacts', appId, 'public', 'data', 'mendel_data');
+                const dataRef = collection(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_data');
                 const q = query(dataRef);
 
                 const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -98,16 +103,16 @@
                     setAllData(data);
                 }, (err) => {
                     console.error("同期エラー:", err);
-                    setError("データの読み込み権限がありません。");
+                    setError("データの読み込み権限がありません。Firestoreが「テストモード」か確認してください。");
                 });
                 return () => unsubscribe();
             }, [user]);
 
-            // 3. データの書き込み（指定された厳密なパスを使用）
+            // 3. データの書き込み
             const updateDB = async (newCounts, currentName) => {
                 if (!user) return;
                 try {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'mendel_data', user.uid);
+                    const docRef = doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_data', user.uid);
                     await setDoc(docRef, {
                         name: currentName,
                         ...newCounts,
@@ -163,7 +168,7 @@
             const strokeDasharray = `${dominantPct * circumference} ${circumference}`;
 
             if (error) {
-                return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold">{error}</div>;
+                return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold px-4 text-center">{error}</div>;
             }
 
             if (!user) {
