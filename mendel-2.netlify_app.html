@@ -34,6 +34,11 @@
         
         const { useState, useEffect, useMemo } = React;
 
+        // =====================================================================
+        // 管理者パスワード設定（ここで好きなパスワードに変更できます）
+        // =====================================================================
+        const ADMIN_PASSWORD = "9331";
+
         // 環境判定
         const isCanvasEnv = typeof __firebase_config !== 'undefined' && typeof __app_id !== 'undefined';
 
@@ -78,6 +83,7 @@
             const [user, setUser] = useState(null);
             const [classGroup, setClassGroup] = useState('A組'); // 新設：クラス名
             const [name, setName] = useState(''); 
+            const [passwordInput, setPasswordInput] = useState(''); // 新設：パスワード入力用
             const [isNameSet, setIsNameSet] = useState(false);
             const [myCounts, setMyCounts] = useState({ AB: 0, Ab: 0, aB: 0, ab: 0 });
             const [allData, setAllData] = useState([]);
@@ -177,10 +183,14 @@
             const handleJoin = (e) => {
                 e.preventDefault();
                 if (classGroup === '先生モード') {
-                    setIsNameSet(true);
-                    setName('先生');
-                    updateDB(myCounts, '先生モード', '先生');
-                    setFilterClass('all'); // 先生はデフォルトで全体表示
+                    if (passwordInput === ADMIN_PASSWORD) {
+                        setIsNameSet(true);
+                        setName('先生');
+                        updateDB(myCounts, '先生モード', '先生');
+                        setFilterClass('all'); // 先生はデフォルトで全体表示
+                    } else {
+                        alert("パスワードが違います。");
+                    }
                 } else if (name.trim()) {
                     setIsNameSet(true);
                     updateDB(myCounts, classGroup, name.trim());
@@ -248,7 +258,7 @@
                                         {CLASS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
-                                {classGroup !== '先生モード' && (
+                                {classGroup !== '先生モード' ? (
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-1">班の名前</label>
                                         <input
@@ -257,6 +267,18 @@
                                             onChange={(e) => setName(e.target.value)}
                                             placeholder="例：1班、松本ペア"
                                             className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 outline-none font-bold text-slate-700"
+                                            required
+                                        />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1">管理者パスワード</label>
+                                        <input
+                                            type="password"
+                                            value={passwordInput}
+                                            onChange={(e) => setPasswordInput(e.target.value)}
+                                            placeholder="パスワードを入力"
+                                            className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 outline-none font-bold text-slate-700"
                                             required
                                         />
                                     </div>
