@@ -4,15 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>二遺伝子雑種 LIVE集計</title>
+    <!-- Tailwind CSS (スタイリング) -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM (UI構築) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel (ブラウザ上でJSXを変換) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-50">
     <div id="root"></div>
 
+    <!-- Babel設定 -->
     <script>
         Babel.registerPreset('react-classic', {
             presets: [
@@ -21,6 +26,7 @@
         });
     </script>
 
+    <!-- アプリケーションのコード -->
     <script type="text/babel" data-type="module" data-presets="react-classic">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -81,7 +87,7 @@
             const [error, setError] = useState(null);
             
             const [filterClass, setFilterClass] = useState('all');
-            const [showHelp, setShowHelp] = useState(false); // 新設：ヘルプモーダルの状態
+            const [showHelp, setShowHelp] = useState(false); // ヘルプモーダル表示用
 
             // 1. 認証プロセス
             useEffect(() => {
@@ -125,10 +131,24 @@
                     if (!isNameSet) {
                         const myDoc = data.find(d => d.id === user.uid);
                         if (myDoc && myDoc.name) {
-                            setClassGroup(myDoc.classGroup || 'A組');
-                            setName(myDoc.name);
-                            setMyCounts({ AB: myDoc.AB || 0, Ab: myDoc.Ab || 0, aB: myDoc.aB || 0, ab: myDoc.ab || 0 });
-                            setIsNameSet(true);
+                            if (myDoc.classGroup === '先生モード') {
+                                setClassGroup('先生モード');
+                                setName('先生');
+                                setMyCounts({ AB: 0, Ab: 0, aB: 0, ab: 0 });
+                                setIsNameSet(true);
+                                setFilterClass('all');
+                                setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data', user.uid), {
+                                    classGroup: '先生モード',
+                                    name: '先生',
+                                    AB: 0, Ab: 0, aB: 0, ab: 0,
+                                    updatedAt: new Date().toISOString()
+                                }, { merge: true });
+                            } else {
+                                setClassGroup(myDoc.classGroup || 'A組');
+                                setName(myDoc.name);
+                                setMyCounts({ AB: myDoc.AB || 0, Ab: myDoc.Ab || 0, aB: myDoc.aB || 0, ab: myDoc.ab || 0 });
+                                setIsNameSet(true);
+                            }
                         }
                     }
                 }, (err) => {
@@ -169,7 +189,7 @@
                 }
             };
 
-            // --- 新設：直接入力機能（先生用） ---
+            // 先生モード用：直接入力
             const handleDirectInput = (type, value) => {
                 const num = value === '' ? 0 : parseInt(value, 10);
                 if (!isNaN(num) && num >= 0) {
@@ -185,7 +205,9 @@
                     if (passwordInput === ADMIN_PASSWORD) {
                         setIsNameSet(true);
                         setName('先生');
-                        updateDB(myCounts, '先生モード', '先生');
+                        const resetCounts = { AB: 0, Ab: 0, aB: 0, ab: 0 };
+                        setMyCounts(resetCounts);
+                        updateDB(resetCounts, '先生モード', '先生');
                         setFilterClass('all');
                     } else {
                         alert("パスワードが違います。");
@@ -236,53 +258,32 @@
             if (error) return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold px-4 text-center">{error}</div>;
             if (!user) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">システムに接続中...</div>;
 
+            // ▼▼▼ ログイン前画面 ▼▼▼
             if (!isNameSet) {
                 return (
                     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
                         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border-t-8 border-blue-600 relative">
-                            <button 
-                                onClick={() => setShowHelp(true)}
-                                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 font-bold flex items-center justify-center transition-colors font-serif italic text-lg"
-                                title="アプリの概要と使い方"
-                            >
-                                i
-                            </button>
+                            {/* iボタン */}
+                            <button onClick={() => setShowHelp(true)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center transition-colors font-serif italic" title="アプリの概要">i</button>
+
                             <h1 className="text-2xl font-bold text-center text-slate-800 mb-2">二遺伝子雑種 LIVE集計</h1>
                             <p className="text-center text-slate-500 mb-6 text-sm">自分のクラスと班名を入力してください</p>
                             <form onSubmit={handleJoin} className="space-y-5">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">クラス</label>
-                                    <select 
-                                        value={classGroup} 
-                                        onChange={(e) => setClassGroup(e.target.value)}
-                                        className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 outline-none font-bold text-slate-700 bg-white"
-                                    >
+                                    <select value={classGroup} onChange={(e) => setClassGroup(e.target.value)} className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 outline-none font-bold text-slate-700 bg-white">
                                         {CLASS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 {classGroup !== '先生モード' ? (
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-1">班の名前</label>
-                                        <input
-                                            type="text"
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            placeholder="例：1班、松本ペア"
-                                            className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 outline-none font-bold text-slate-700"
-                                            required
-                                        />
+                                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="例：1班、松本ペア" className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 outline-none font-bold text-slate-700" required />
                                     </div>
                                 ) : (
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-1">管理者パスワード</label>
-                                        <input
-                                            type="password"
-                                            value={passwordInput}
-                                            onChange={(e) => setPasswordInput(e.target.value)}
-                                            placeholder="パスワードを入力"
-                                            className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 outline-none font-bold text-slate-700"
-                                            required
-                                        />
+                                        <input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="パスワードを入力" className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 outline-none font-bold text-slate-700" required />
                                     </div>
                                 )}
                                 <button type="submit" className={`w-full ${classGroup === '先生モード' ? 'bg-slate-700 hover:bg-slate-800' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-3 rounded-lg transition-colors mt-4`}>
@@ -291,7 +292,7 @@
                             </form>
                         </div>
 
-                        {/* ログイン前用のヘルプモーダル */}
+                        {/* ログイン前用のヘルプモーダル（概要） */}
                         {showHelp && (
                             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                                 <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
@@ -300,7 +301,6 @@
                                         <span className="font-serif italic text-blue-600">i</span> アプリの概要
                                     </h2>
                                     <div className="space-y-6 text-sm text-slate-700">
-                                        {/* 1. 本時の目標 */}
                                         <div>
                                             <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">🌟 この実験のねらい</h4>
                                             <ol className="list-decimal pl-5 space-y-2">
@@ -309,7 +309,6 @@
                                                 <li><b>生命の神秘に気づく:</b> 複雑な生命現象の裏に、単純な数学的ルール（3:1の掛け合わせ）が隠れている面白さを味わおう！</li>
                                             </ol>
                                         </div>
-                                        {/* 2. 準備物 */}
                                         <div>
                                             <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">🎒 準備するもの</h4>
                                             <ul className="list-disc pl-5 space-y-1">
@@ -337,6 +336,7 @@
                 );
             }
 
+            // ▼▼▼ ログイン後メイン画面 ▼▼▼
             return (
                 <div className="min-h-screen pb-20">
                     <header className="bg-slate-800 text-white p-4 sticky top-0 z-20 shadow-md">
@@ -347,19 +347,12 @@
                             </h1>
                             
                             <div className="flex flex-col sm:flex-row items-center gap-2">
-                                <button 
-                                    onClick={() => setShowHelp(true)}
-                                    className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm mr-2"
-                                >
+                                <button onClick={() => setShowHelp(true)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm mr-2">
                                     ？ 実験ルール
                                 </button>
                                 <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
                                     <span className="font-bold text-slate-300">集計対象:</span>
-                                    <select 
-                                        value={filterClass}
-                                        onChange={(e) => setFilterClass(e.target.value)}
-                                        className="bg-slate-600 text-white font-bold py-1 px-2 rounded outline-none border border-slate-500 focus:border-blue-400 cursor-pointer"
-                                    >
+                                    <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-600 text-white font-bold py-1 px-2 rounded outline-none border border-slate-500 focus:border-blue-400 cursor-pointer">
                                         <option value="all">学年全体（すべて）</option>
                                         {CLASS_LIST.filter(c => c !== '先生モード').map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
@@ -401,7 +394,7 @@
                                         
                                         return (
                                             <div key={p.id} className="flex-1 flex flex-col items-center gap-2 h-full z-10">
-                                                <div className="text-xs md:text-sm font-bold text-slate-600 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100">
+                                                <div className="text-xs md:text-sm font-bold text-slate-500 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100">
                                                     比: {ratio}
                                                 </div>
                                                 <div className="w-full max-w-[80px] bg-slate-200 rounded-t-md relative flex-1 flex items-end overflow-hidden shadow-inner">
@@ -465,14 +458,8 @@
                                             <span className="text-xs font-bold opacity-80 mt-1">{p.name}</span>
                                         </button>
                                         <div className="flex items-center justify-between bg-slate-50 rounded-lg p-2 border border-slate-200">
-                                            <button 
-                                                onClick={() => handleDecrement(p.id)} 
-                                                className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors font-bold shadow-sm"
-                                            >
-                                                －
-                                            </button>
+                                            <button onClick={() => handleDecrement(p.id)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors font-bold shadow-sm">－</button>
                                             
-                                            {/* 先生モード時のみ直接入力可能なテキストボックスにする */}
                                             {classGroup === '先生モード' ? (
                                                 <input 
                                                     type="number" 
@@ -519,7 +506,7 @@
                         </section>
                     </main>
 
-                    {/* ヘルプモーダル（ルール説明） */}
+                    {/* ログイン後用のヘルプモーダル（実験ルール） */}
                     {showHelp && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                             <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
