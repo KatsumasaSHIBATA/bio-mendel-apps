@@ -515,17 +515,17 @@
                         </header>
 
                         <div className={`w-full text-center font-black transition-colors ${
-                            activeTimerClass === 'all' ? 'bg-slate-200 text-slate-600 py-2 text-sm md:text-base' :
+                            activeTimerClass === 'all' ? 'bg-slate-200 text-slate-600 py-2 md:py-3 text-xl md:text-2xl' :
                             currentTimerState.isRunning && timeLeft > 0 && timeLeft <= 10000 ? 'bg-red-100 text-red-600 py-2 md:py-3 text-2xl md:text-3xl' :
                             currentTimerState.isRunning && timeLeft > 10000 ? 'bg-emerald-100 text-emerald-800 py-2 md:py-3 text-2xl md:text-3xl' :
                             currentTimerState.isRunning && timeLeft === 0 ? 'bg-red-500 text-white animate-pulse py-2 md:py-3 text-2xl md:text-3xl' :
                             'bg-slate-200 text-slate-600 py-2 md:py-3 text-xl md:text-2xl'
                         }`}>
                             {
-                                activeTimerClass === 'all' ? 'ℹ️ 対象クラスを選択してタイマーを使用' :
-                                currentTimerState.isRunning && timeLeft > 0 ? `⏱ 残り ${formatTime(timeLeft)}` :
+                                activeTimerClass === 'all' ? '対象クラスを選択してタイマーを使用' :
+                                currentTimerState.isRunning && timeLeft > 0 ? `残り ${formatTime(timeLeft)}` :
                                 currentTimerState.isRunning && timeLeft === 0 ? '終了！！入力ストップ！' :
-                                '⏸ 待機中（タイマー開始で入力可能になります）'
+                                '待機中（タイマー開始で入力可能になります）'
                             }
                         </div>
                     </div>
