@@ -4,20 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>一遺伝子雑種 LIVE集計</title>
-    <!-- Tailwind CSS (スタイリング) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & ReactDOM (UI構築) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel (ブラウザ上でJSXを変換) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-50">
     <div id="root"></div>
 
-    <!-- Babel設定 -->
     <script>
         Babel.registerPreset('react-classic', {
             presets: [
@@ -26,7 +21,6 @@
         });
     </script>
 
-    <!-- アプリケーションのコード -->
     <script type="text/babel" data-type="module" data-presets="react-classic">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -34,15 +28,9 @@
         
         const { useState, useEffect, useMemo } = React;
 
-        // =====================================================================
-        // 管理者パスワード設定（ここで好きなパスワードに変更できます）
-        // =====================================================================
         const ADMIN_PASSWORD = "9331";
-
-        // 環境判定
         const isCanvasEnv = typeof __firebase_config !== 'undefined' && typeof __app_id !== 'undefined';
 
-        // 先生のFirebase設定情報
         const myFirebaseConfig = {
             apiKey: "AIzaSyCar5BfWLpkeMZY3CvQXWPafMcy7-3j0Ao",
             authDomain: "mendelapp-e8546.firebaseapp.com",
@@ -55,28 +43,25 @@
         const firebaseConfig = isCanvasEnv ? JSON.parse(__firebase_config) : myFirebaseConfig;
         const currentAppId = isCanvasEnv ? __app_id : "matsumoto-mendel-1";
 
-        // Firebaseの初期化
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // クラスの選択肢
         const CLASS_LIST = ['A組', 'B組', 'C組', 'D組', 'E組', 'F組', 'G組', 'H組', '先生モード'];
 
         function App() {
             const [user, setUser] = useState(null);
-            const [classGroup, setClassGroup] = useState('A組'); // 新設：クラス名
+            const [classGroup, setClassGroup] = useState('A組');
             const [name, setName] = useState('');
-            const [passwordInput, setPasswordInput] = useState(''); // 新設：パスワード入力用
+            const [passwordInput, setPasswordInput] = useState('');
             const [isNameSet, setIsNameSet] = useState(false);
             const [myCounts, setMyCounts] = useState({ AA: 0, Aa: 0, aa: 0 });
             const [allData, setAllData] = useState([]);
             const [error, setError] = useState(null);
             
-            // 新設：集計ダッシュボードの表示フィルタ
             const [filterClass, setFilterClass] = useState('all');
+            const [showHelp, setShowHelp] = useState(false);
 
-            // 1. 認証プロセス
             useEffect(() => {
                 const initAuth = async () => {
                     try {
@@ -86,7 +71,7 @@
                             await signInAnonymously(auth);
                         }
                     } catch (e) {
-                        console.error("認証エラー詳細:", e);
+                        console.error("認証エラー:", e);
                         setError(`認証エラー: ${e.message}`);
                     }
                 };
@@ -96,7 +81,6 @@
                 return () => unsubscribe();
             }, []);
 
-            // 2. リアルタイム同期
             useEffect(() => {
                 if (!user) return;
 
@@ -109,14 +93,12 @@
                         data.push({ id: doc.id, ...doc.data() });
                     });
                     
-                    // クラス名 → 班名の順で綺麗にソート
                     data.sort((a, b) => {
                         if (a.classGroup !== b.classGroup) return (a.classGroup || '').localeCompare(b.classGroup || '');
                         return (a.name || '').localeCompare(b.name || '');
                     });
                     setAllData(data);
 
-                    // リロード時のデータ復元
                     if (!isNameSet) {
                         const myDoc = data.find(d => d.id === user.uid);
                         if (myDoc && myDoc.name) {
@@ -133,7 +115,6 @@
                 return () => unsubscribe();
             }, [user, isNameSet]);
 
-            // 3. データの書き込み（クラス名も含めて保存）
             const updateDB = async (newCounts, currentClassGroup, currentName) => {
                 if (!user) return;
                 try {
@@ -146,7 +127,6 @@
                     }, { merge: true });
                 } catch (e) {
                     console.error("エラー:", e);
-                    alert("データ保存に失敗しました。");
                 }
             };
 
@@ -164,6 +144,15 @@
                 }
             };
 
+            const handleDirectInput = (type, value) => {
+                const num = value === '' ? 0 : parseInt(value, 10);
+                if (!isNaN(num) && num >= 0) {
+                    const newCounts = { ...myCounts, [type]: num };
+                    setMyCounts(newCounts);
+                    updateDB(newCounts, classGroup, name);
+                }
+            };
+
             const handleJoin = (e) => {
                 e.preventDefault();
                 if (classGroup === '先生モード') {
@@ -171,22 +160,20 @@
                         setIsNameSet(true);
                         setName('先生');
                         updateDB(myCounts, '先生モード', '先生');
-                        setFilterClass('all'); // 先生はデフォルトで全体表示
+                        setFilterClass('all');
                     } else {
                         alert("パスワードが違います。");
                     }
                 } else if (name.trim()) {
                     setIsNameSet(true);
                     updateDB(myCounts, classGroup, name.trim());
-                    // 参加したクラスを初期のフィルタに設定
                     setFilterClass(classGroup);
                 }
             };
 
-            // --- 新設：先生用リセット機能 ---
             const handleReset = async () => {
                 const targetName = filterClass === 'all' ? '学年全体の全クラス' : filterClass;
-                if (!confirm(`本当に「${targetName}」のデータをすべて削除して 0 に戻しますか？\n（※この操作は取り消せません）`)) return;
+                if (!confirm(`本当に「${targetName}」のデータをすべて削除して 0 に戻しますか？`)) return;
                 try {
                     const targets = filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass);
                     for (const d of targets) {
@@ -194,12 +181,10 @@
                     }
                     alert(`${targetName} のデータをリセットしました。`);
                 } catch (e) {
-                    console.error("削除エラー:", e);
                     alert("データの削除に失敗しました。");
                 }
             };
 
-            // --- 集計ロジック（フィルタリング対応） ---
             const filteredData = useMemo(() => {
                 if (filterClass === 'all') return allData;
                 return allData.filter(d => d.classGroup === filterClass);
@@ -230,11 +215,18 @@
             if (error) return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold px-4 text-center">{error}</div>;
             if (!user) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">システムに接続中...</div>;
 
-            // ログイン画面
+            // ▼▼▼ ログイン前画面 ▼▼▼
             if (!isNameSet) {
                 return (
                     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-                        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border-t-8 border-emerald-500">
+                        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border-t-8 border-emerald-500 relative">
+                            <button 
+                                onClick={() => setShowHelp(true)}
+                                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 font-bold flex items-center justify-center transition-colors"
+                                title="ログインの手順"
+                            >
+                                ？
+                            </button>
                             <h1 className="text-2xl font-bold text-center text-slate-800 mb-2">一遺伝子雑種 LIVE集計</h1>
                             <p className="text-center text-slate-500 mb-6 text-sm">自分のクラスと班名を入力してください</p>
                             <form onSubmit={handleJoin} className="space-y-5">
@@ -251,26 +243,12 @@
                                 {classGroup !== '先生モード' ? (
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-1">班の名前</label>
-                                        <input
-                                            type="text"
-                                            value={name}
-                                            onChange={(e) => setName(e.target.value)}
-                                            placeholder="例：1班、松本ペア"
-                                            className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-emerald-500 outline-none font-bold text-slate-700"
-                                            required
-                                        />
+                                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="例：1班、松本ペア" className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-emerald-500 outline-none font-bold text-slate-700" required />
                                     </div>
                                 ) : (
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-1">管理者パスワード</label>
-                                        <input
-                                            type="password"
-                                            value={passwordInput}
-                                            onChange={(e) => setPasswordInput(e.target.value)}
-                                            placeholder="パスワードを入力"
-                                            className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 outline-none font-bold text-slate-700"
-                                            required
-                                        />
+                                        <input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="パスワードを入力" className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 outline-none font-bold text-slate-700" required />
                                     </div>
                                 )}
                                 <button type="submit" className={`w-full ${classGroup === '先生モード' ? 'bg-slate-700 hover:bg-slate-800' : 'bg-emerald-500 hover:bg-emerald-600'} text-white font-bold py-3 rounded-lg transition-colors mt-4`}>
@@ -278,61 +256,73 @@
                                 </button>
                             </form>
                         </div>
+
+                        {/* ログイン前用のヘルプモーダル */}
+                        {showHelp && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                                <div className="bg-white rounded-2xl p-6 max-w-sm w-full relative shadow-2xl">
+                                    <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center">✕</button>
+                                    <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-emerald-200 pb-2">📖 アプリのログイン手順</h2>
+                                    <div className="space-y-3 text-sm text-slate-700">
+                                        <ol className="list-decimal pl-5 space-y-2 font-bold">
+                                            <li>画面の選択肢から、自分のクラスを選ぶ。</li>
+                                            <li>班の名前（例：1班、〇〇ペアなど）を入力する。</li>
+                                            <li>実験スタートのボタンを押して、入力パネルを開く。</li>
+                                        </ol>
+                                    </div>
+                                    <div className="mt-6 text-center">
+                                        <button onClick={() => setShowHelp(false)} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-8 rounded-lg shadow-sm">閉じる</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             }
 
+            // ▼▼▼ ログイン後メイン画面 ▼▼▼
             return (
                 <div className="min-h-screen pb-20">
-                    {/* ヘッダー */}
                     <header className="bg-slate-800 text-white p-4 sticky top-0 z-20 shadow-md">
                         <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:justify-between md:items-center gap-3">
                             <h1 className="font-bold text-lg flex items-center gap-2">
                                 <i className="lucide-activity text-emerald-400"></i>
                                 LIVE集計：一遺伝子雑種
                             </h1>
-                            {/* クラス表示フィルタとリセットボタン */}
                             <div className="flex flex-col sm:flex-row items-center gap-2">
+                                <button 
+                                    onClick={() => setShowHelp(true)}
+                                    className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm mr-2"
+                                >
+                                    ？ 実験ルール
+                                </button>
                                 <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
                                     <span className="font-bold text-slate-300">集計対象:</span>
-                                    <select 
-                                        value={filterClass}
-                                        onChange={(e) => setFilterClass(e.target.value)}
-                                        className="bg-slate-600 text-white font-bold py-1 px-2 rounded outline-none border border-slate-500 focus:border-emerald-400 cursor-pointer"
-                                    >
+                                    <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-600 text-white font-bold py-1 px-2 rounded outline-none border border-slate-500 focus:border-emerald-400 cursor-pointer">
                                         <option value="all">学年全体（すべて）</option>
                                         {CLASS_LIST.filter(c => c !== '先生モード').map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
                                 {classGroup === '先生モード' && (
-                                    <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
-                                        データリセット
-                                    </button>
+                                    <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-lg flex items-center gap-1 shadow-sm">データリセット</button>
                                 )}
                             </div>
                         </div>
                     </header>
 
                     <main className="max-w-4xl mx-auto p-4 space-y-6 mt-4">
-                        {/* グラフエリア */}
                         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 border-b pb-2 gap-2">
-                                <h2 className="text-lg font-bold text-slate-800">
-                                    {filterClass === 'all' ? '🏫 学年全体' : `📝 ${filterClass}`} のデータ
-                                </h2>
-                                <span className="font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-sm border border-emerald-100">
-                                    総試行回数: {totalTrials} 回
-                                </span>
+                                <h2 className="text-lg font-bold text-slate-800">{filterClass === 'all' ? '🏫 学年全体' : `📝 ${filterClass}`} のデータ</h2>
+                                <span className="font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-sm border border-emerald-100">総試行回数: {totalTrials} 回</span>
                             </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl p-4 border border-slate-100">
                                     <h3 className="font-bold text-slate-600 mb-4">表現型の比率 (目標 3:1)</h3>
                                     <div className="relative w-40 h-40 mb-4 transform -rotate-90">
                                         <svg viewBox="0 0 140 140" className="w-full h-full">
                                             <circle cx="70" cy="70" r={radius} fill="transparent" stroke="#3b82f6" strokeWidth="20" />
-                                            <circle cx="70" cy="70" r={radius} fill="transparent" stroke="#10b981" strokeWidth="20" 
-                                                    strokeDasharray={strokeDasharray} className="transition-all duration-500 ease-out" />
+                                            <circle cx="70" cy="70" r={radius} fill="transparent" stroke="#10b981" strokeWidth="20" strokeDasharray={strokeDasharray} className="transition-all duration-500 ease-out" />
                                         </svg>
                                         <div className="absolute inset-0 flex flex-col items-center justify-center transform rotate-90">
                                             <span className="text-3xl font-bold text-slate-800">{totalTrials}</span>
@@ -366,8 +356,7 @@
                                                     <span className="text-slate-500">{count}回 (比: {ratio})</span>
                                                 </div>
                                                 <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                    <div className={`h-full ${type === 'aa' ? 'bg-blue-500' : 'bg-emerald-500'} transition-all duration-500`} 
-                                                         style={{ width: `${heightPct}%` }}></div>
+                                                    <div className={`h-full ${type === 'aa' ? 'bg-blue-500' : 'bg-emerald-500'} transition-all duration-500`} style={{ width: `${heightPct}%` }}></div>
                                                 </div>
                                             </div>
                                         );
@@ -376,14 +365,11 @@
                             </div>
                         </section>
 
-                        {/* 入力パネル */}
                         <section className="bg-white rounded-2xl shadow-lg border-2 border-emerald-500 p-4 md:p-6 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-2">
                                 <h2 className="text-xl font-bold text-slate-800">🎯 {classGroup} - {name} の入力パネル</h2>
-                                <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                                    自分たちの記録: {myCounts.AA + myCounts.Aa + myCounts.aa} 回
-                                </span>
+                                <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">自分たちの記録: {myCounts.AA + myCounts.Aa + myCounts.aa} 回</span>
                             </div>
                             <div className="grid grid-cols-3 gap-3 md:gap-6">
                                 {['AA', 'Aa', 'aa'].map(type => (
@@ -393,7 +379,11 @@
                                         </button>
                                         <div className="flex items-center justify-between bg-slate-50 rounded-lg p-2 border border-slate-200">
                                             <button onClick={() => handleDecrement(type)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors font-bold shadow-sm">－</button>
-                                            <span className="font-bold text-xl text-slate-700">{myCounts[type]}</span>
+                                            {classGroup === '先生モード' ? (
+                                                <input type="number" min="0" value={myCounts[type] === 0 ? '' : myCounts[type]} onChange={(e) => handleDirectInput(type, e.target.value)} className="w-20 text-center font-bold text-xl text-slate-700 bg-white border border-emerald-300 rounded focus:border-emerald-500 outline-none p-1 shadow-inner" placeholder="0" />
+                                            ) : (
+                                                <span className="font-bold text-xl text-slate-700">{myCounts[type]}</span>
+                                            )}
                                             <div className="w-8"></div>
                                         </div>
                                     </div>
@@ -401,12 +391,9 @@
                             </div>
                         </section>
 
-                        {/* 班リスト */}
                         <section className="bg-slate-50 rounded-xl p-4 border border-slate-200">
                             <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
-                                <h3 className="text-sm font-bold text-slate-600">
-                                    👥 {filterClass === 'all' ? '全クラスの状況' : `${filterClass}の状況`}
-                                </h3>
+                                <h3 className="text-sm font-bold text-slate-600">👥 {filterClass === 'all' ? '全クラスの状況' : `${filterClass}の状況`}</h3>
                                 <span className="text-xs font-bold text-slate-400">表示中: {filteredData.length}班</span>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -417,15 +404,40 @@
                                         <div key={d.id} className={`p-3 rounded-lg text-sm border shadow-sm ${d.id === user?.uid ? 'bg-emerald-50 border-emerald-300 ring-1 ring-emerald-200' : 'bg-white border-slate-200'}`}>
                                             <div className="text-xs font-bold text-emerald-500 mb-0.5">{d.classGroup}</div>
                                             <div className="font-bold text-slate-700 truncate mb-1">{d.name}</div>
-                                            <div className="text-xs font-bold text-slate-500 bg-slate-100 rounded px-2 py-1 inline-block">
-                                                計 {(d.AA||0)+(d.Aa||0)+(d.aa||0)} 回
-                                            </div>
+                                            <div className="text-xs font-bold text-slate-500 bg-slate-100 rounded px-2 py-1 inline-block">計 {(d.AA||0)+(d.Aa||0)+(d.aa||0)} 回</div>
                                         </div>
                                     ))
                                 )}
                             </div>
                         </section>
                     </main>
+
+                    {/* ログイン後用のヘルプモーダル（実験ルール） */}
+                    {showHelp && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
+                                <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center">✕</button>
+                                <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-emerald-200 pb-2">📖 実験のルール</h2>
+                                <div className="space-y-4 text-sm text-slate-700">
+                                    <h3 className="font-bold text-emerald-600 text-base">🎯 F2の分離比 3 : 1 をみんなで確かめよう!</h3>
+                                    <ol className="list-decimal pl-5 space-y-3">
+                                        <li><b>♂役と♀役を決め、それぞれAとaの2枚のカード</b>を裏向きにして持ち、相手に見えないようにシャッフルする。</li>
+                                        <li>互いに相手の手札から、1枚ずつカードを引く。</li>
+                                        <li>引いた2枚のカードの組み合わせ（<b>AA、Aa、aa</b>）を確認する。</li>
+                                        <li>代表者が、組み合わせの遺伝子型に対応する<b>＋ボタン</b>を1回タップして入力する。<br/>
+                                            <span className="text-xs text-slate-500 font-bold">※もし間違えて押してしまったら、下のマイナスを押して消す。</span>
+                                        </li>
+                                        <li>引いたカードを戻して再度シャッフルし、2〜5を繰り返す。<br/>
+                                            <span className="text-xs text-emerald-600 font-bold">（1つの班で何回やってもOK！たくさんデータを集めよう）</span>
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div className="mt-6 text-center">
+                                    <button onClick={() => setShowHelp(false)} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-8 rounded-lg shadow-sm">閉じる</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
