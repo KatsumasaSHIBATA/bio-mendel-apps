@@ -4,20 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>二遺伝子雑種 LIVE集計</title>
-    <!-- Tailwind CSS (スタイリング) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & ReactDOM (UI構築) -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel (ブラウザ上でJSXを変換) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-slate-50">
     <div id="root"></div>
 
-    <!-- Babel設定 -->
     <script>
         Babel.registerPreset('react-classic', {
             presets: [
@@ -26,7 +21,6 @@
         });
     </script>
 
-    <!-- アプリケーションのコード -->
     <script type="text/babel" data-type="module" data-presets="react-classic">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -35,7 +29,7 @@
         const { useState, useEffect, useMemo } = React;
 
         // =====================================================================
-        // 管理者パスワード設定（ここで好きなパスワードに変更できます）
+        // 管理者パスワード設定
         // =====================================================================
         const ADMIN_PASSWORD = "9331";
 
@@ -55,12 +49,10 @@
         const firebaseConfig = isCanvasEnv ? JSON.parse(__firebase_config) : myFirebaseConfig;
         const currentAppId = isCanvasEnv ? __app_id : "matsumoto-mendel-2"; 
 
-        // Firebaseの初期化
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- 定数設定（二遺伝子雑種の表現型） ---
         const PHENOTYPES = [
             { id: 'AB', label: '[AB]', name: '丸・黄', target: 9, 
               btnColor: 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300', 
@@ -76,21 +68,20 @@
               barColor: 'bg-slate-400' },
         ];
 
-        // クラスの選択肢
         const CLASS_LIST = ['A組', 'B組', 'C組', 'D組', 'E組', 'F組', 'G組', 'H組', '先生モード'];
 
         function App() {
             const [user, setUser] = useState(null);
-            const [classGroup, setClassGroup] = useState('A組'); // 新設：クラス名
+            const [classGroup, setClassGroup] = useState('A組');
             const [name, setName] = useState(''); 
-            const [passwordInput, setPasswordInput] = useState(''); // 新設：パスワード入力用
+            const [passwordInput, setPasswordInput] = useState('');
             const [isNameSet, setIsNameSet] = useState(false);
             const [myCounts, setMyCounts] = useState({ AB: 0, Ab: 0, aB: 0, ab: 0 });
             const [allData, setAllData] = useState([]);
             const [error, setError] = useState(null);
             
-            // 新設：集計ダッシュボードの表示フィルタ
             const [filterClass, setFilterClass] = useState('all');
+            const [showHelp, setShowHelp] = useState(false); // 新設：ヘルプモーダルの状態
 
             // 1. 認証プロセス
             useEffect(() => {
@@ -125,14 +116,12 @@
                         data.push({ id: doc.id, ...doc.data() });
                     });
                     
-                    // クラス名 → 班名の順でソート
                     data.sort((a, b) => {
                         if (a.classGroup !== b.classGroup) return (a.classGroup || '').localeCompare(b.classGroup || '');
                         return (a.name || '').localeCompare(b.name || '');
                     });
                     setAllData(data);
 
-                    // リロード時のデータ復元
                     if (!isNameSet) {
                         const myDoc = data.find(d => d.id === user.uid);
                         if (myDoc && myDoc.name) {
@@ -149,7 +138,7 @@
                 return () => unsubscribe();
             }, [user, isNameSet]);
 
-            // 3. データの書き込み（クラス名も追加）
+            // 3. データの書き込み
             const updateDB = async (newCounts, currentClassGroup, currentName) => {
                 if (!user) return;
                 try {
@@ -180,6 +169,16 @@
                 }
             };
 
+            // --- 新設：直接入力機能（先生用） ---
+            const handleDirectInput = (type, value) => {
+                const num = value === '' ? 0 : parseInt(value, 10);
+                if (!isNaN(num) && num >= 0) {
+                    const newCounts = { ...myCounts, [type]: num };
+                    setMyCounts(newCounts);
+                    updateDB(newCounts, classGroup, name);
+                }
+            };
+
             const handleJoin = (e) => {
                 e.preventDefault();
                 if (classGroup === '先生モード') {
@@ -187,19 +186,17 @@
                         setIsNameSet(true);
                         setName('先生');
                         updateDB(myCounts, '先生モード', '先生');
-                        setFilterClass('all'); // 先生はデフォルトで全体表示
+                        setFilterClass('all');
                     } else {
                         alert("パスワードが違います。");
                     }
                 } else if (name.trim()) {
                     setIsNameSet(true);
                     updateDB(myCounts, classGroup, name.trim());
-                    // 参加したクラスを自分の画面の初期フィルタに設定する
                     setFilterClass(classGroup);
                 }
             };
 
-            // --- 新設：先生用リセット機能 ---
             const handleReset = async () => {
                 const targetName = filterClass === 'all' ? '学年全体の全クラス' : filterClass;
                 if (!confirm(`本当に「${targetName}」のデータをすべて削除して 0 に戻しますか？\n（※この操作は取り消せません）`)) return;
@@ -215,7 +212,6 @@
                 }
             };
 
-            // --- 集計ロジック（フィルタリング対応） ---
             const filteredData = useMemo(() => {
                 if (filterClass === 'all') return allData;
                 return allData.filter(d => d.classGroup === filterClass);
@@ -240,11 +236,17 @@
             if (error) return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold px-4 text-center">{error}</div>;
             if (!user) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">システムに接続中...</div>;
 
-            // ログイン（参加）画面
             if (!isNameSet) {
                 return (
                     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
-                        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border-t-8 border-blue-600">
+                        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border-t-8 border-blue-600 relative">
+                            <button 
+                                onClick={() => setShowHelp(true)}
+                                className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700 font-bold flex items-center justify-center transition-colors"
+                                title="遊び方とルール"
+                            >
+                                ？
+                            </button>
                             <h1 className="text-2xl font-bold text-center text-slate-800 mb-2">二遺伝子雑種 LIVE集計</h1>
                             <p className="text-center text-slate-500 mb-6 text-sm">自分のクラスと班名を入力してください</p>
                             <form onSubmit={handleJoin} className="space-y-5">
@@ -288,11 +290,30 @@
                                 </button>
                             </form>
                         </div>
+
+                        {/* ログイン前用のヘルプモーダル */}
+                        {showHelp && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                                <div className="bg-white rounded-2xl p-6 max-w-sm w-full relative shadow-2xl">
+                                    <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center">✕</button>
+                                    <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-blue-200 pb-2">📖 アプリのログイン手順</h2>
+                                    <div className="space-y-3 text-sm text-slate-700">
+                                        <ol className="list-decimal pl-5 space-y-2 font-bold">
+                                            <li>画面の選択肢から、自分のクラスを選ぶ。</li>
+                                            <li>班の名前（例：1班、〇〇ペアなど）を入力する。</li>
+                                            <li>実験スタートのボタンを押して、入力パネルを開く。</li>
+                                        </ol>
+                                    </div>
+                                    <div className="mt-6 text-center">
+                                        <button onClick={() => setShowHelp(false)} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-8 rounded-lg shadow-sm">閉じる</button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 );
             }
 
-            // メイン画面
             return (
                 <div className="min-h-screen pb-20">
                     <header className="bg-slate-800 text-white p-4 sticky top-0 z-20 shadow-md">
@@ -302,8 +323,13 @@
                                 LIVE集計：二遺伝子雑種
                             </h1>
                             
-                            {/* クラス表示フィルタとリセットボタン */}
                             <div className="flex flex-col sm:flex-row items-center gap-2">
+                                <button 
+                                    onClick={() => setShowHelp(true)}
+                                    className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm mr-2"
+                                >
+                                    ？ 遊び方
+                                </button>
                                 <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
                                     <span className="font-bold text-slate-300">集計対象:</span>
                                     <select 
@@ -325,7 +351,6 @@
                     </header>
 
                     <main className="max-w-4xl mx-auto p-4 space-y-6 mt-4">
-                        {/* グラフエリア */}
                         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 border-b pb-2 gap-2">
                                 <h2 className="text-lg font-bold text-slate-800">
@@ -395,7 +420,6 @@
                             </div>
                         </section>
 
-                        {/* コントローラー (自分の入力パネル) */}
                         <section className="bg-white rounded-2xl shadow-lg border-2 border-blue-500 p-4 md:p-6 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-2 bg-blue-500"></div>
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-2">
@@ -421,19 +445,31 @@
                                             <button 
                                                 onClick={() => handleDecrement(p.id)} 
                                                 className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors font-bold shadow-sm"
-                                                title="1つ減らす"
                                             >
                                                 －
                                             </button>
-                                            <span className="font-bold text-xl text-slate-700">{myCounts[p.id]}</span>
-                                            <div className="w-8"></div> {/* バランス調整用スペーサー */}
+                                            
+                                            {/* 先生モード時のみ直接入力可能なテキストボックスにする */}
+                                            {classGroup === '先生モード' ? (
+                                                <input 
+                                                    type="number" 
+                                                    min="0"
+                                                    value={myCounts[p.id] === 0 ? '' : myCounts[p.id]} 
+                                                    onChange={(e) => handleDirectInput(p.id, e.target.value)}
+                                                    className="w-20 text-center font-bold text-xl text-slate-700 bg-white border border-blue-300 rounded focus:border-blue-500 outline-none p-1 shadow-inner"
+                                                    placeholder="0"
+                                                />
+                                            ) : (
+                                                <span className="font-bold text-xl text-slate-700">{myCounts[p.id]}</span>
+                                            )}
+                                            
+                                            <div className="w-8"></div>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         </section>
 
-                        {/* クラスごとの班リスト */}
                         <section className="bg-slate-50 rounded-xl p-4 border border-slate-200">
                             <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
                                 <h3 className="text-sm font-bold text-slate-600">
@@ -459,6 +495,40 @@
                             </div>
                         </section>
                     </main>
+
+                    {/* ヘルプモーダル（ルール説明） */}
+                    {showHelp && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
+                                <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center">✕</button>
+                                <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-blue-200 pb-2">📖 実験のルール</h2>
+                                <div className="space-y-4 text-sm text-slate-700">
+                                    <h3 className="font-bold text-blue-600 text-base">🎯 独立の法則 9 : 3 : 3 : 1 を確かめよう!</h3>
+                                    <ol className="list-decimal pl-5 space-y-3">
+                                        <li><b>♂役と♀役を決め、それぞれAB, Ab, aB, ab の4枚のカード</b>を裏向きにして持ち、相手に見えないようにシャッフルする。</li>
+                                        <li>互いに相手の手札から、1枚ずつカードを引く。</li>
+                                        <li>引いた2枚のカードを組み合わせて、<b>表現型（丸・黄など）</b>を確認する。
+                                            <ul className="list-disc pl-5 mt-2 space-y-1 text-slate-600 font-medium">
+                                                <li><b>[AB]（丸・黄）</b>　←遺伝子型：<b>A_B_</b></li>
+                                                <li><b>[Ab]（丸・緑）</b>　←遺伝子型：<b>A_bb</b></li>
+                                                <li><b>[aB]（しわ・黄）</b>←遺伝子型：<b>aaB_</b></li>
+                                                <li><b>[ab]（しわ・緑）</b>←遺伝子型：<b>aabb</b></li>
+                                            </ul>
+                                        </li>
+                                        <li>代表者が、対応する表現型の<b>＋ボタン</b>を1回タップして入力する。<br/>
+                                            <span className="text-xs text-slate-500 font-bold">※間違えて押してしまったら、下のマイナスを押して消す。</span>
+                                        </li>
+                                        <li>引いたカードを戻して再度シャッフルし、2〜5を繰り返す。<br/>
+                                            <span className="text-xs text-blue-600 font-bold">（1つの班で何回やってもOK！たくさんデータを集めよう）</span>
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div className="mt-6 text-center">
+                                    <button onClick={() => setShowHelp(false)} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-8 rounded-lg shadow-sm">閉じる</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         }
