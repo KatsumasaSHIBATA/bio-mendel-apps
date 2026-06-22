@@ -116,14 +116,8 @@
                         const myDoc = data.find(d => d.id === user.uid);
                         if (myDoc && myDoc.name) {
                             if (myDoc.classGroup === '先生モード') {
-                                setClassGroup('先生モード');
-                                setName('先生');
-                                setMyCounts({ AB: 0, Ab: 0, aB: 0, ab: 0 });
-                                setIsNameSet(true);
-                                setFilterClass('all');
-                                setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data', user.uid), {
-                                    classGroup: '先生モード', name: '先生', AB: 0, Ab: 0, aB: 0, ab: 0, updatedAt: new Date().toISOString()
-                                }, { merge: true });
+                                // ▼ 変更：先生モードの時は、リロード時にデータを消去して初期画面に戻る
+                                deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data', user.uid)).catch(console.error);
                             } else {
                                 setClassGroup(myDoc.classGroup || 'A組');
                                 setName(myDoc.name);
@@ -215,10 +209,17 @@
                 }
             };
 
-            const handleJoin = (e) => {
+            // ▼ 変更：asyncを追加し、ログイン時に過去の先生データを一掃する処理を追加
+            const handleJoin = async (e) => {
                 e.preventDefault();
                 if (classGroup === '先生モード') {
                     if (passwordInput === ADMIN_PASSWORD) {
+                        // 過去の「先生モード」のゴミデータを一掃する
+                        const oldTeacherDocs = allData.filter(d => d.classGroup === '先生モード');
+                        for (const oldDoc of oldTeacherDocs) {
+                            await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data', oldDoc.id)).catch(console.error);
+                        }
+
                         setIsNameSet(true);
                         setName('先生');
                         const resetCounts = { AB: 0, Ab: 0, aB: 0, ab: 0 };
@@ -647,7 +648,7 @@
                         <section className="bg-slate-50 rounded-xl p-4 border border-slate-200 shadow-inner">
                             <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
                                 <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                    🏆 {classGroup === '先生モード' ? (filterClass === 'simulation' ? 'シミュレーションデータ' : filterClass === 'all' ? 'ランキング（全クラス）' : `${filterClass} ランキング`) : `ランキング`}
+                                    {classGroup === '先生モード' ? (filterClass === 'simulation' ? 'シミュレーションデータ' : filterClass === 'all' ? 'ランキング（全クラス）' : `${filterClass} ランキング`) : `ランキング`}
                                 </h3>
                                 <div className="flex gap-3 text-xs font-bold text-slate-500">
                                     <span className="flex items-center gap-1"><span className="bg-yellow-400 text-white px-1.5 py-0.5 rounded text-[10px]">TOP</span> トップ</span>
@@ -696,7 +697,7 @@
                                                 <li><b className="text-blue-600">CSVダウンロード</b><br/>現在表示している対象クラスのデータをCSVファイルでダウンロードできます。Excelでの成績処理等にご活用ください。</li>
                                                 <li><b className="text-blue-600">全データリセット</b><br/>現在表示している対象クラスの全データを一括で 0 に戻します。対象が「デモ」の場合は先生の入力のみリセットします。</li>
                                                 <li><b className="text-blue-600">強制ログアウト（キック）</b><br/>各班の「✕」ボタンを押すとその班のデータを消去し、対象生徒を初期画面に強制的に戻します。（登録間違いやイタズラ対応用）</li>
-                                                <li><b className="text-blue-600">デモ用 直接入力</b><br/><b>対象を「デモ」に切り替えた時のみ</b>、先生用の入力パネルが表示され、数値を直接打ち込めます。また、ブラウザをリロードするだけで先生のデータは 0 にリセットされます。</li>
+                                                <li><b className="text-blue-600">デモ用 直接入力</b><br/><b>対象を「デモ」に切り替えた時のみ</b>、先生用の入力パネルが表示され、数値を直接打ち込めます。また、ブラウザをリロードすると先生のデータは消去され、初期画面に戻ります。（過去の先生データも再ログイン時に自動で一掃されます）</li>
                                             </ul>
                                         </div>
                                     </>
