@@ -399,19 +399,17 @@
                                     </div>
                                 )}
                                 
-                                {/* 先生モード以外の時だけヘルプボタンと自クラス名を表示 */}
+                                {/* ▼ 変更：先生モードの時は「？ マニュアル」に変化 */}
+                                <button onClick={() => setShowHelp(true)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm mr-2">
+                                    {classGroup === '先生モード' ? '？ マニュアル' : '？ ルール'}
+                                </button>
+                                
                                 {classGroup !== '先生モード' && (
-                                    <>
-                                        <button onClick={() => setShowHelp(true)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
-                                            ？ ルール
-                                        </button>
-                                        <div className="flex items-center gap-1 bg-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold text-slate-200">
-                                             {classGroup}
-                                        </div>
-                                    </>
+                                    <div className="flex items-center gap-1 bg-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold text-slate-200">
+                                         {classGroup}
+                                    </div>
                                 )}
 
-                                {/* 先生モードの時だけクラス切り替えUIを表示 */}
                                 {classGroup === '先生モード' && (
                                     <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
                                         <span className="font-bold text-slate-300">対象:</span>
@@ -558,25 +556,45 @@
                         </section>
                     </main>
 
+                    {/* ▼ 変更：先生モードの時はマニュアルを表示する */}
                     {showHelp && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                             <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
                                 <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center">✕</button>
-                                <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-emerald-200 pb-2">📖 実験のルール</h2>
-                                <div className="space-y-4 text-sm text-slate-700">
-                                    <h3 className="font-bold text-emerald-600 text-base">🎯 F2の分離比 3 : 1 をみんなで確かめよう!</h3>
-                                    <ol className="list-decimal pl-5 space-y-3">
-                                        <li><b>♂役と♀役を決め、それぞれAとaの2枚のカード</b>を裏向きにして持ち、相手に見えないようにシャッフルする。</li>
-                                        <li>互いに相手の手札から、1枚ずつカードを引く。</li>
-                                        <li>引いた2枚のカードの組み合わせ（<b>AA、Aa、aa</b>）を確認する。</li>
-                                        <li>代表者が、組み合わせの遺伝子型に対応する<b>＋ボタン</b>を1回タップして入力する。<br/>
-                                            <span className="text-xs text-slate-500 font-bold">※もし間違えて押してしまったら、下のマイナスを押して消す。</span>
-                                        </li>
-                                        <li>引いたカードを戻して再度シャッフルし、2〜5を繰り返す。<br/>
-                                            <span className="text-xs text-emerald-600 font-bold">（1つの班で何回やってもOK！たくさんデータを集めよう）</span>
-                                        </li>
-                                    </ol>
-                                </div>
+                                
+                                {classGroup === '先生モード' ? (
+                                    <>
+                                        <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-emerald-200 pb-2">👨‍🏫 先生モード 機能マニュアル</h2>
+                                        <div className="space-y-4 text-sm text-slate-700">
+                                            <ul className="space-y-3">
+                                                <li><b className="text-emerald-600">⏱ タイマー連動</b><br/>開始すると全員の端末にカウントダウンが表示され、0になると生徒は入力できなくなります。</li>
+                                                <li><b className="text-emerald-600">👁 対象クラスの切り替え</b><br/>グラフとランキングを特定のクラスに絞り込めます。（生徒画面は自クラスのランキングのみに固定されています）</li>
+                                                <li><b className="text-emerald-600">🔄 全データリセット</b><br/>現在表示している対象クラスの全データを一括で 0 に戻します。</li>
+                                                <li><b className="text-emerald-600">👢 強制ログアウト（キック）</b><br/>各班の「✕」ボタンを押すとその班のデータを消去し、対象生徒を初期画面に強制的に戻します。（登録間違いやイタズラ対応用）</li>
+                                                <li><b className="text-emerald-600">⌨️ デモ用 直接入力</b><br/>先生自身の入力パネルは数値を直接打ち込めます。また、ブラウザをリロードするだけで先生のデータは 0 にリセットされます。</li>
+                                            </ul>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-emerald-200 pb-2">📖 実験のルール</h2>
+                                        <div className="space-y-4 text-sm text-slate-700">
+                                            <h3 className="font-bold text-emerald-600 text-base">🎯 F2の分離比 3 : 1 をみんなで確かめよう!</h3>
+                                            <ol className="list-decimal pl-5 space-y-3">
+                                                <li><b>♂役と♀役を決め、それぞれAとaの2枚のカード</b>を裏向きにして持ち、相手に見えないようにシャッフルする。</li>
+                                                <li>互いに相手の手札から、1枚ずつカードを引く。</li>
+                                                <li>引いた2枚のカードの組み合わせ（<b>AA、Aa、aa</b>）を確認する。</li>
+                                                <li>代表者が、組み合わせの遺伝子型に対応する<b>＋ボタン</b>を1回タップして入力する。<br/>
+                                                    <span className="text-xs text-slate-500 font-bold">※もし間違えて押してしまったら、下のマイナスを押して消す。</span>
+                                                </li>
+                                                <li>引いたカードを戻して再度シャッフルし、2〜5を繰り返す。<br/>
+                                                    <span className="text-xs text-emerald-600 font-bold">（1つの班で何回やってもOK！たくさんデータを集めよう）</span>
+                                                </li>
+                                            </ol>
+                                        </div>
+                                    </>
+                                )}
+                                
                                 <div className="mt-6 text-center">
                                     <button onClick={() => setShowHelp(false)} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-8 rounded-lg shadow-sm">閉じる</button>
                                 </div>
