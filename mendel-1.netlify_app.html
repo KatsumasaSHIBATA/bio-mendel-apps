@@ -32,7 +32,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect, useMemo, useRef } = React;
 
         // 管理者パスワード設定
         const ADMIN_PASSWORD = "9331";
@@ -73,6 +73,13 @@
             const [timeLeft, setTimeLeft] = useState(null);
             const [timerMinutes, setTimerMinutes] = useState(5); // 初期値5分
 
+            // --- 新設：最新のステートを監視するためのRef ---
+            const isNameSetRef = useRef(isNameSet);
+            useEffect(() => { isNameSetRef.current = isNameSet; }, [isNameSet]);
+            
+            const classGroupRef = useRef(classGroup);
+            useEffect(() => { classGroupRef.current = classGroup; }, [classGroup]);
+
             useEffect(() => {
                 const initAuth = async () => {
                     try {
@@ -99,7 +106,7 @@
                     snapshot.forEach((doc) => data.push({ id: doc.id, ...doc.data() }));
                     setAllData(data);
 
-                    if (!isNameSet) {
+                    if (!isNameSetRef.current) {
                         const myDoc = data.find(d => d.id === user.uid);
                         if (myDoc && myDoc.name) {
                             if (myDoc.classGroup === '先生モード') {
@@ -118,6 +125,15 @@
                                 setIsNameSet(true);
                             }
                         }
+                    } else {
+                        // --- 新設：強制ログアウト（キック）監視処理 ---
+                        const myDoc = data.find(d => d.id === user.uid);
+                        if (!myDoc && classGroupRef.current !== '先生モード') {
+                            alert("管理者によってデータが消去されました。\n最初から正しいクラスと班名で入り直してください。");
+                            setIsNameSet(false);
+                            setName('');
+                            setMyCounts({ AA: 0, Aa: 0, aa: 0 });
+                        }
                     }
                 });
 
@@ -127,7 +143,7 @@
                 });
 
                 return () => { unsubscribeData(); unsubscribeTimer(); };
-            }, [user, isNameSet]);
+            }, [user]); // 依存配列からisNameSetを外し、不要な再接続を防止
 
             useEffect(() => {
                 if (timerState.isRunning && timerState.endTime) {
@@ -213,6 +229,16 @@
                 }
             };
 
+            // --- 新設：特定の班だけを消去＆強制ログアウト ---
+            const handleKick = async (id, className, groupName) => {
+                if (!confirm(`本当に ${className}「${groupName}」のデータを消去し、ログアウトさせますか？\n（いたずらや登録間違いの修正用）`)) return;
+                try {
+                    await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_data', id));
+                } catch (e) {
+                    alert("データの削除に失敗しました。");
+                }
+            };
+
             const startTimer = async (minutes) => {
                 const mins = parseInt(minutes, 10);
                 if (isNaN(mins) || mins <= 0) return;
@@ -232,9 +258,13 @@
                 return `${m}:${s.toString().padStart(2, '0')}`;
             };
 
-            // ランキング処理（ピタリ賞廃止・試行回数順）
+            // ランキング処理
             const processedData = useMemo(() => {
-                const targetData = filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass);
+                // 生徒は常に「自分のクラス」だけ表示。先生はフィルタに従う。
+                const targetData = classGroup === '先生モード' 
+                    ? (filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass))
+                    : allData.filter(d => d.classGroup === classGroup);
+                    
                 let maxTotal = 0;
                 const dataWithStats = targetData.filter(d => d.classGroup !== '先生モード').map(d => {
                     const total = (d.AA || 0) + (d.Aa || 0) + (d.aa || 0);
@@ -244,16 +274,20 @@
                 return dataWithStats.map(d => ({
                     ...d, isTopCount: d.total > 0 && d.total === maxTotal
                 })).sort((a, b) => b.total - a.total); 
-            }, [allData, filterClass]);
+            }, [allData, filterClass, classGroup]);
 
             const totals = useMemo(() => {
-                return (filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass))
-                    .reduce((acc, curr) => ({
-                        AA: acc.AA + (curr.AA || 0),
-                        Aa: acc.Aa + (curr.Aa || 0),
-                        aa: acc.aa + (curr.aa || 0)
-                    }), { AA: 0, Aa: 0, aa: 0 });
-            }, [allData, filterClass]);
+                // グラフは生徒は常に「学年全体」。先生はフィルタに従う。
+                const targetData = classGroup === '先生モード'
+                    ? (filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass))
+                    : allData;
+
+                return targetData.reduce((acc, curr) => ({
+                    AA: acc.AA + (curr.AA || 0),
+                    Aa: acc.Aa + (curr.Aa || 0),
+                    aa: acc.aa + (curr.aa || 0)
+                }), { AA: 0, Aa: 0, aa: 0 });
+            }, [allData, filterClass, classGroup]);
 
             const totalTrials = totals.AA + totals.Aa + totals.aa;
             const dominant = totals.AA + totals.Aa;
@@ -272,7 +306,6 @@
             if (error) return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold px-4 text-center">{error}</div>;
             if (!user) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">システムに接続中...</div>;
 
-            // ▼ ログイン前画面
             if (!isNameSet) {
                 return (
                     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
@@ -303,7 +336,6 @@
                                 </button>
                             </form>
                         </div>
-                        {/* ログイン前用のヘルプモーダル */}
                         {showHelp && (
                             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                                 <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
@@ -343,7 +375,6 @@
                 );
             }
 
-            // ▼ ログイン後メイン画面
             return (
                 <div className="min-h-screen pb-20">
                     <header className="bg-slate-800 text-white p-4 sticky top-0 z-20 shadow-md">
@@ -353,7 +384,6 @@
                                 LIVE集計：一遺伝子雑種
                             </h1>
                             <div className="flex flex-wrap items-center gap-2">
-                                {/* タイマー任意入力UI */}
                                 {classGroup === '先生モード' && (
                                     <div className="flex items-center gap-1 bg-slate-700 p-1 pl-2 rounded-lg text-sm border border-slate-600">
                                         <span className="font-bold text-slate-300">⏱</span>
@@ -369,20 +399,28 @@
                                     </div>
                                 )}
                                 
-                                {/* 先生モード以外の時だけヘルプボタンを表示 */}
+                                {/* 先生モード以外の時だけヘルプボタンと自クラス名を表示 */}
                                 {classGroup !== '先生モード' && (
-                                    <button onClick={() => setShowHelp(true)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
-                                        ？ ルール
-                                    </button>
+                                    <>
+                                        <button onClick={() => setShowHelp(true)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                            ？ ルール
+                                        </button>
+                                        <div className="flex items-center gap-1 bg-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold text-slate-200">
+                                            📍 {classGroup}
+                                        </div>
+                                    </>
                                 )}
 
-                                <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
-                                    <span className="font-bold text-slate-300">対象:</span>
-                                    <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-600 text-white font-bold py-1 px-2 rounded outline-none border border-slate-500 focus:border-emerald-400 cursor-pointer">
-                                        <option value="all">学年全体</option>
-                                        {CLASS_LIST.filter(c => c !== '先生モード').map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
-                                </div>
+                                {/* 先生モードの時だけクラス切り替えUIを表示 */}
+                                {classGroup === '先生モード' && (
+                                    <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
+                                        <span className="font-bold text-slate-300">対象:</span>
+                                        <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-600 text-white font-bold py-1 px-2 rounded outline-none border border-slate-500 focus:border-emerald-400 cursor-pointer">
+                                            <option value="all">学年全体</option>
+                                            {CLASS_LIST.filter(c => c !== '先生モード').map(c => <option key={c} value={c}>{c}</option>)}
+                                        </select>
+                                    </div>
+                                )}
 
                                 {classGroup === '先生モード' && (
                                     <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
@@ -393,7 +431,6 @@
                         </div>
                     </header>
 
-                    {/* タイマー表示バー */}
                     {timeLeft !== null && (
                         <div className={`w-full py-3 text-center font-black text-2xl md:text-3xl shadow-md sticky top-[72px] z-10 transition-colors ${timeLeft === 0 ? 'bg-red-500 text-white animate-pulse' : timeLeft < 10000 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-800'}`}>
                             {timeLeft === 0 ? '終了！！入力ストップ！' : `⏱ 残り ${formatTime(timeLeft)}`}
@@ -403,7 +440,9 @@
                     <main className="max-w-4xl mx-auto p-4 space-y-6 mt-4">
                         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 border-b pb-2 gap-2">
-                                <h2 className="text-lg font-bold text-slate-800">{filterClass === 'all' ? '🏫 学年全体' : `📝 ${filterClass}`} のデータ</h2>
+                                <h2 className="text-lg font-bold text-slate-800">
+                                    {classGroup === '先生モード' ? (filterClass === 'all' ? '🏫 学年全体' : `📝 ${filterClass}`) : '🏫 学年全体'} のデータ
+                                </h2>
                                 <span className="font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-sm border border-emerald-100">総試行回数: {totalTrials} 回</span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -458,7 +497,7 @@
                         <section className="bg-white rounded-2xl shadow-lg border-2 border-emerald-500 p-4 md:p-6 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-2">
-                                <h2 className="text-xl font-bold text-slate-800">🎯 {classGroup} - {name} の入力パネル</h2>
+                                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">🎯 {classGroup} - {name} の入力パネル</h2>
                                 <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">自分たちの記録: {myCounts.AA + myCounts.Aa + myCounts.aa} 回</span>
                             </div>
                             <div className="grid grid-cols-3 gap-3 md:gap-6">
@@ -484,7 +523,7 @@
                         <section className="bg-slate-50 rounded-xl p-4 border border-slate-200 shadow-inner">
                             <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
                                 <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                    🏆 {filterClass === 'all' ? '全クラスのランキング' : `${filterClass} ランキング`}
+                                    🏆 {classGroup === '先生モード' ? (filterClass === 'all' ? '全クラスのランキング' : `${filterClass} ランキング`) : `${classGroup}のランキング`}
                                 </h3>
                                 <div className="flex gap-3 text-xs font-bold text-slate-500">
                                     <span className="flex items-center gap-1"><span className="text-yellow-500 text-base">👑</span>トップ</span>
@@ -496,6 +535,14 @@
                                 ) : (
                                     processedData.map(d => (
                                         <div key={d.id} className={`relative p-3 rounded-lg text-sm border shadow-sm transition-all ${d.id === user?.uid ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-300 scale-105 z-10' : 'bg-white border-slate-200'}`}>
+                                            {/* 先生モード時のみ：強制ログアウト（✕）ボタン */}
+                                            {classGroup === '先生モード' && d.classGroup !== '先生モード' && (
+                                                <button 
+                                                    onClick={() => handleKick(d.id, d.classGroup, d.name)}
+                                                    className="absolute -top-2 -left-2 bg-red-100 text-red-600 hover:bg-red-500 hover:text-white rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-md transition-colors z-20"
+                                                    title="この班のデータを消去して強制ログアウト"
+                                                >✕</button>
+                                            )}
                                             {d.isTopCount && <div className="absolute -top-2 -right-2 flex gap-1"><span className="bg-white rounded-full p-1 shadow border border-yellow-200 text-lg leading-none" title="最多試行回数！">👑</span></div>}
                                             <div className="text-xs font-bold text-emerald-500 mb-0.5">{d.classGroup}</div>
                                             <div className="font-bold text-slate-800 truncate mb-1 text-base">{d.name}</div>
@@ -511,7 +558,6 @@
                         </section>
                     </main>
 
-                    {/* ログイン後用のヘルプモーダル */}
                     {showHelp && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                             <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
