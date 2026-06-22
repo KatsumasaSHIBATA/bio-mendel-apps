@@ -236,10 +236,18 @@
             };
 
             const handleReset = async () => {
-                const targetName = filterClass === 'all' ? '学年全体の全クラス' : filterClass;
+                if (filterClass === 'simulation') {
+                    if (!confirm(`シミュレーション（先生）のデータをすべて 0 に戻しますか？`)) return;
+                    setMyCounts({ AB: 0, Ab: 0, aB: 0, ab: 0 });
+                    updateDB({ AB: 0, Ab: 0, aB: 0, ab: 0 }, '先生モード', '先生');
+                    alert(`シミュレーションデータをリセットしました。`);
+                    return;
+                }
+
+                const targetName = filterClass === 'all' ? '学年全体（生徒）' : filterClass;
                 if (!confirm(`本当に「${targetName}」のデータをすべて削除して 0 に戻しますか？`)) return;
                 try {
-                    const targets = filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass);
+                    const targets = filterClass === 'all' ? allData.filter(d => d.classGroup !== '先生モード') : allData.filter(d => d.classGroup === filterClass);
                     for (const d of targets) await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data', d.id));
                     alert(`${targetName} のデータをリセットしました。`);
                 } catch (e) {
@@ -256,9 +264,8 @@
                 }
             };
 
-            // --- 変更：対象クラスのみのタイマーを起動・停止 ---
             const startTimer = async (minutes) => {
-                if (filterClass === 'all') {
+                if (filterClass === 'all' || filterClass === 'simulation') {
                     alert("タイマーを開始する対象クラスを選択してください。");
                     return;
                 }
@@ -271,7 +278,7 @@
             };
 
             const stopTimer = async () => {
-                if (filterClass === 'all') {
+                if (filterClass === 'all' || filterClass === 'simulation') {
                     alert("タイマーを停止する対象クラスを選択してください。");
                     return;
                 }
@@ -281,7 +288,15 @@
             };
 
             const handleExportCSV = () => {
-                const targetData = filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass);
+                let targetData = [];
+                if (filterClass === 'simulation') {
+                    targetData = allData.filter(d => d.classGroup === '先生モード');
+                } else if (filterClass === 'all') {
+                    targetData = allData.filter(d => d.classGroup !== '先生モード');
+                } else {
+                    targetData = allData.filter(d => d.classGroup === filterClass);
+                }
+
                 if (targetData.length === 0) {
                     alert("出力するデータがありません。");
                     return;
@@ -311,7 +326,7 @@
                 const dd = String(now.getDate()).padStart(2, '0');
                 const hh = String(now.getHours()).padStart(2, '0');
                 const min = String(now.getMinutes()).padStart(2, '0');
-                link.download = `二遺伝子雑種_${yyyy}${mm}${dd}_${hh}${min}.csv`;
+                link.download = `二遺伝子雑種_${filterClass}_${yyyy}${mm}${dd}_${hh}${min}.csv`;
                 
                 document.body.appendChild(link);
                 link.click();
@@ -328,12 +343,21 @@
             };
 
             const processedData = useMemo(() => {
-                const targetData = classGroup === '先生モード' 
-                    ? (filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass))
-                    : allData.filter(d => d.classGroup === classGroup);
+                let targetData = [];
+                if (classGroup === '先生モード') {
+                    if (filterClass === 'simulation') {
+                        targetData = allData.filter(d => d.classGroup === '先生モード');
+                    } else if (filterClass === 'all') {
+                        targetData = allData.filter(d => d.classGroup !== '先生モード');
+                    } else {
+                        targetData = allData.filter(d => d.classGroup === filterClass);
+                    }
+                } else {
+                    targetData = allData.filter(d => d.classGroup === classGroup);
+                }
                     
                 let maxTotal = 0;
-                const dataWithStats = targetData.filter(d => d.classGroup !== '先生モード').map(d => {
+                const dataWithStats = targetData.map(d => {
                     const total = (d.AB || 0) + (d.Ab || 0) + (d.aB || 0) + (d.ab || 0);
                     if (total > maxTotal) maxTotal = total;
                     return { ...d, total };
@@ -344,9 +368,18 @@
             }, [allData, filterClass, classGroup]);
 
             const totals = useMemo(() => {
-                const targetData = classGroup === '先生モード'
-                    ? (filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass))
-                    : allData;
+                let targetData = [];
+                if (classGroup === '先生モード') {
+                    if (filterClass === 'simulation') {
+                        targetData = allData.filter(d => d.classGroup === '先生モード');
+                    } else if (filterClass === 'all') {
+                        targetData = allData.filter(d => d.classGroup !== '先生モード');
+                    } else {
+                        targetData = allData.filter(d => d.classGroup === filterClass);
+                    }
+                } else {
+                    targetData = allData.filter(d => d.classGroup !== '先生モード');
+                }
 
                 return targetData.reduce((acc, curr) => ({
                     AB: acc.AB + (curr.AB || 0),
@@ -474,7 +507,8 @@
                                     <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
                                         <span className="font-bold text-slate-300">対象:</span>
                                         <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-600 text-white font-bold py-1 px-2 rounded outline-none border border-slate-500 focus:border-blue-400 cursor-pointer">
-                                            <option value="all">学年全体</option>
+                                            <option value="simulation">👨‍🏫 デモ (シミュレーション)</option>
+                                            <option value="all">🏫 学年全体（生徒のみ）</option>
                                             {CLASS_LIST.filter(c => c !== '先生モード').map(c => <option key={c} value={c}>{c}</option>)}
                                         </select>
                                     </div>
@@ -514,7 +548,7 @@
                         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 border-b pb-2 gap-2">
                                 <h2 className="text-lg font-bold text-slate-800">
-                                    {classGroup === '先生モード' ? (filterClass === 'all' ? '🏫 学年全体' : `📝 ${filterClass}`) : '🏫 学年全体'} のデータ
+                                    {classGroup === '先生モード' ? (filterClass === 'simulation' ? '👨‍🏫 シミュレーション' : filterClass === 'all' ? '🏫 学年全体（生徒）' : `📝 ${filterClass}`) : '🏫 学年全体'} のデータ
                                     <span className="text-slate-400 text-sm ml-2 font-normal">（目標 9：3：3：1）</span>
                                 </h2>
                                 <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-sm border border-blue-100">総試行回数: {totalTrials} 回</span>
@@ -564,49 +598,53 @@
                             </div>
                         </section>
 
-                        <section className="bg-white rounded-2xl shadow-lg border-2 border-blue-500 p-4 md:p-6 relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-2 bg-blue-500"></div>
-                            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-2">
-                                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">🎯 {classGroup} - {name} の入力パネル</h2>
-                                <span className="text-sm font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">自分たちの記録: {myCounts.AB + myCounts.Ab + myCounts.aB + myCounts.ab} 回</span>
-                            </div>
-                            
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                                {PHENOTYPES.map((p) => (
-                                    <div key={p.id} className="flex flex-col gap-2">
-                                        {/* ▼ 変更：入力無効時はボタンをグレーアウト */}
-                                        <button 
-                                            onClick={() => handleIncrement(p.id)} 
-                                            disabled={isInputDisabled} 
-                                            className={`${p.btnColor} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''} border-2 rounded-xl p-4 flex flex-col items-center justify-center transition-all active:scale-95 shadow-sm min-h-[100px]`}
-                                        >
-                                            <span className="text-2xl font-bold">＋ {p.label}</span>
-                                            <span className="text-xs font-bold opacity-80 mt-1">{p.name}</span>
-                                        </button>
-                                        <div className="flex items-center justify-between bg-slate-50 rounded-lg p-2 border border-slate-200">
+                        {/* ▼ 変更：先生モードで対象がシミュレーション以外の時は入力パネルを非表示にする */}
+                        {(classGroup !== '先生モード' || filterClass === 'simulation') && (
+                            <section className="bg-white rounded-2xl shadow-lg border-2 border-blue-500 p-4 md:p-6 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-2 bg-blue-500"></div>
+                                <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-2">
+                                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                        {classGroup === '先生モード' ? '👨‍🏫 シミュレーション入力パネル' : `🎯 ${classGroup} - ${name} の入力パネル`}
+                                    </h2>
+                                    <span className="text-sm font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">自分たちの記録: {myCounts.AB + myCounts.Ab + myCounts.aB + myCounts.ab} 回</span>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                                    {PHENOTYPES.map((p) => (
+                                        <div key={p.id} className="flex flex-col gap-2">
                                             <button 
-                                                onClick={() => handleDecrement(p.id)} 
+                                                onClick={() => handleIncrement(p.id)} 
                                                 disabled={isInputDisabled} 
-                                                className={`w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 font-bold shadow-sm ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:text-red-500 hover:border-red-200 transition-colors'}`}
-                                            >－</button>
-                                            
-                                            {classGroup === '先生モード' ? (
-                                                <input type="number" min="0" value={myCounts[p.id] === 0 ? '' : myCounts[p.id]} onChange={(e) => handleDirectInput(p.id, e.target.value)} className="w-20 text-center font-bold text-xl text-slate-700 bg-white border border-blue-300 rounded focus:border-blue-500 outline-none p-1 shadow-inner" placeholder="0" />
-                                            ) : (
-                                                <span className="font-bold text-xl text-slate-700">{myCounts[p.id]}</span>
-                                            )}
-                                            
-                                            <div className="w-8"></div>
+                                                className={`${p.btnColor} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''} border-2 rounded-xl p-4 flex flex-col items-center justify-center transition-all active:scale-95 shadow-sm min-h-[100px]`}
+                                            >
+                                                <span className="text-2xl font-bold">＋ {p.label}</span>
+                                                <span className="text-xs font-bold opacity-80 mt-1">{p.name}</span>
+                                            </button>
+                                            <div className="flex items-center justify-between bg-slate-50 rounded-lg p-2 border border-slate-200">
+                                                <button 
+                                                    onClick={() => handleDecrement(p.id)} 
+                                                    disabled={isInputDisabled} 
+                                                    className={`w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 font-bold shadow-sm ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:text-red-500 hover:border-red-200 transition-colors'}`}
+                                                >－</button>
+                                                
+                                                {classGroup === '先生モード' ? (
+                                                    <input type="number" min="0" value={myCounts[p.id] === 0 ? '' : myCounts[p.id]} onChange={(e) => handleDirectInput(p.id, e.target.value)} className="w-20 text-center font-bold text-xl text-slate-700 bg-white border border-blue-300 rounded focus:border-blue-500 outline-none p-1 shadow-inner" placeholder="0" />
+                                                ) : (
+                                                    <span className="font-bold text-xl text-slate-700">{myCounts[p.id]}</span>
+                                                )}
+                                                
+                                                <div className="w-8"></div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         <section className="bg-slate-50 rounded-xl p-4 border border-slate-200 shadow-inner">
                             <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
                                 <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                    🏆 {classGroup === '先生モード' ? (filterClass === 'all' ? '全クラスのランキング' : `${filterClass} ランキング`) : `${classGroup}のランキング`}
+                                    🏆 {classGroup === '先生モード' ? (filterClass === 'simulation' ? 'シミュレーションデータ' : filterClass === 'all' ? '全クラス（生徒）ランキング' : `${filterClass} ランキング`) : `${classGroup}のランキング`}
                                 </h3>
                                 <div className="flex gap-3 text-xs font-bold text-slate-500">
                                     <span className="flex items-center gap-1"><span className="text-yellow-500 text-base">👑</span>トップ</span>
@@ -652,11 +690,11 @@
                                         <div className="space-y-4 text-sm text-slate-700">
                                             <ul className="space-y-3">
                                                 <li><b className="text-blue-600">⏱ クラス個別タイマー＆入力制限</b><br/>選択した「対象クラス」の生徒に対してのみタイマーが発動します。また、<b>生徒はタイマーが動いている時間帯しかデータを入力（＋、ー）できなくなります。</b></li>
-                                                <li><b className="text-blue-600">👁 対象クラスの切り替え</b><br/>グラフとランキングを特定のクラスに絞り込めます。（生徒画面は自クラスのランキングのみに固定されています）</li>
+                                                <li><b className="text-blue-600">👁 対象クラスの切り替え</b><br/>グラフやランキングを「学年全体」「各クラス」「デモ (シミュレーション)」に切り替えられます。<b>生徒のグラフデータに先生のデモ入力が混ざることはありません。</b></li>
                                                 <li><b className="text-blue-600">📥 CSVダウンロード</b><br/>現在表示している対象クラスのデータをCSVファイルでダウンロードできます。Excelでの成績処理等にご活用ください。</li>
-                                                <li><b className="text-blue-600">🔄 全データリセット</b><br/>現在表示している対象クラスの全データを一括で 0 に戻します。</li>
+                                                <li><b className="text-blue-600">🔄 全データリセット</b><br/>現在表示している対象クラスの全データを一括で 0 に戻します。対象が「デモ」の場合は先生の入力のみリセットします。</li>
                                                 <li><b className="text-blue-600">👢 強制ログアウト（キック）</b><br/>各班の「✕」ボタンを押すとその班のデータを消去し、対象生徒を初期画面に強制的に戻します。（登録間違いやイタズラ対応用）</li>
-                                                <li><b className="text-blue-600">⌨️ デモ用 直接入力</b><br/>先生自身の入力パネルは数値を直接打ち込めます。また、ブラウザをリロードするだけで先生のデータは 0 にリセットされます。</li>
+                                                <li><b className="text-blue-600">⌨️ デモ用 直接入力</b><br/><b>対象を「デモ (シミュレーション)」に切り替えた時のみ</b>、先生用の入力パネルが表示され、数値を直接打ち込めます。また、ブラウザをリロードするだけで先生のデータは 0 にリセットされます。</li>
                                             </ul>
                                         </div>
                                     </>
