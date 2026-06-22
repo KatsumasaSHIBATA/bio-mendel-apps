@@ -317,7 +317,7 @@
                                     onClick={() => setShowHelp(true)}
                                     className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm mr-2"
                                 >
-                                    <span className="font-serif italic text-base leading-none">i</span> 概要・ルール
+                                    ？ 実験ルール
                                 </button>
                                 <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
                                     <span className="font-bold text-slate-300">集計対象:</span>
@@ -438,55 +438,24 @@
                     {/* ログイン後用のヘルプモーダル（実験ルール） */}
                     {showHelp && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                            <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
+                            <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
                                 <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center">✕</button>
-                                <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-emerald-200 pb-2 flex items-center gap-2">
-                                    <span className="font-serif italic text-emerald-600">i</span> アプリの概要と実験ルール
+                                <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-emerald-200 pb-2">
+                                    📖 実験のルール
                                 </h2>
-                                <div className="space-y-6 text-sm text-slate-700">
-                                    {/* 1. 本時の目標 */}
-                                    <div>
-                                        <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">1. 本時の目標</h4>
-                                        <ol className="list-decimal pl-5 space-y-1">
-                                            <li><b>知識・理解:</b> 減数分裂による配偶子の形成（分離の法則）と、受精による遺伝子のランダムな組み合わせの仕組みを理解し、パネットスクエアを用いて説明できる。</li>
-                                            <li><b>技能・思考:</b> カードを用いた模擬実験を通して結果を予想・検証し、全体データが一定の比率（表現型で顕性：潜性＝3：1）に収束していく現象を見いだすことができる。</li>
-                                            <li><b>態度:</b> LIVE集計アプリを用いてクラス全員で集めたデータと、メンデルが一人で行った膨大な実験データ（約30,000回）を比較し、科学的な探究やデータの蓄積に対する関心と敬意を持つ。</li>
-                                        </ol>
-                                    </div>
-                                    {/* 2. 準備物 */}
-                                    <div>
-                                        <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">2. 準備物（教具）</h4>
-                                        <ul className="list-disc pl-5 space-y-1">
-                                            <li><b>カードセット（各班1セット）</b>
-                                                <ul className="list-disc pl-5 mt-1 space-y-1">
-                                                    <li><b>仕様:</b> トランプ様カード。</li>
-                                                    <li><b>構成:</b>
-                                                        <ul className="list-none pl-2 mt-1 space-y-1">
-                                                            <li>・雄（♂）用カード：灰系色で「♂ A」「♂ a」と明記（計2枚）</li>
-                                                            <li>・雌（♀）用カード：白系色で「♀ A」「♀ a」と明記（計2枚）</li>
-                                                        </ul>
-                                                    </li>
-                                                </ul>
-                                            </li>
-                                        </ul>
-                                        <p className="mt-2 text-xs text-slate-500 italic">※工夫の意図: 雌雄を色と記号で完全に分けることで、生徒が「4枚から2枚を適当に引く」ことによる確率のズレを防ぎ、生物学的な受精の過程を正しく再現させる。</p>
-                                    </div>
-                                    {/* 3. 実験のルール */}
-                                    <div>
-                                        <h4 className="font-bold text-slate-800 bg-emerald-100 text-emerald-800 px-2 py-1 rounded inline-block mb-2">3. 実験のルール</h4>
-                                        <h5 className="font-bold text-emerald-600 mb-2">🎯 F2の分離比 3 : 1 をみんなで確かめよう!</h5>
-                                        <ol className="list-decimal pl-5 space-y-2">
-                                            <li><b>♂役と♀役を決め、それぞれAとaの2枚のカード</b>を裏向きにして持ち、相手に見えないようにシャッフルする。</li>
-                                            <li>互いに相手の手札から、1枚ずつカードを引く。</li>
-                                            <li>引いた2枚のカードの組み合わせ（<b>AA、Aa、aa</b>）を確認する。</li>
-                                            <li>代表者が、組み合わせの遺伝子型に対応する<b>＋ボタン</b>を1回タップして入力する。<br/>
-                                                <span className="text-xs text-slate-500 font-bold">※もし間違えて押してしまったら、下のマイナスを押して消す。</span>
-                                            </li>
-                                            <li>引いたカードを戻して再度シャッフルし、2〜5を繰り返す。<br/>
-                                                <span className="text-xs text-emerald-600 font-bold">（1つの班で何回やってもOK！たくさんデータを集めよう）</span>
-                                            </li>
-                                        </ol>
-                                    </div>
+                                <div className="space-y-4 text-sm text-slate-700">
+                                    <h3 className="font-bold text-emerald-600 text-base">🎯 F2の分離比 3 : 1 をみんなで確かめよう!</h3>
+                                    <ol className="list-decimal pl-5 space-y-3">
+                                        <li><b>♂役と♀役を決め、それぞれAとaの2枚のカード</b>を裏向きにして持ち、相手に見えないようにシャッフルする。</li>
+                                        <li>互いに相手の手札から、1枚ずつカードを引く。</li>
+                                        <li>引いた2枚のカードの組み合わせ（<b>AA、Aa、aa</b>）を確認する。</li>
+                                        <li>代表者が、組み合わせの遺伝子型に対応する<b>＋ボタン</b>を1回タップして入力する。<br/>
+                                            <span className="text-xs text-slate-500 font-bold">※もし間違えて押してしまったら、下のマイナスを押して消す。</span>
+                                        </li>
+                                        <li>引いたカードを戻して再度シャッフルし、2〜5を繰り返す。<br/>
+                                            <span className="text-xs text-emerald-600 font-bold">（1つの班で何回やってもOK！たくさんデータを集めよう）</span>
+                                        </li>
+                                    </ol>
                                 </div>
                                 <div className="mt-6 text-center">
                                     <button onClick={() => setShowHelp(false)} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-8 rounded-lg shadow-sm">閉じる</button>
