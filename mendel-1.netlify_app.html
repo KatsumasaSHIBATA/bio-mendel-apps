@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>一遺伝子雑種 LIVE集計</title>
-    <!-- Tailwind CSS (スタイリング) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & ReactDOM (UI構築) -->
+    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel (ブラウザ上でJSXを変換) -->
+    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -17,7 +17,7 @@
 <body class="bg-slate-50">
     <div id="root"></div>
 
-    <!-- Babel設定 -->
+    <!-- Babel設定：自動ランタイムによるエラーを回避するためclassicモードを登録 -->
     <script>
         Babel.registerPreset('react-classic', {
             presets: [
@@ -26,7 +26,7 @@
         });
     </script>
 
-    <!-- アプリケーションのコード -->
+    <!-- アプリケーションコード -->
     <script type="text/babel" data-type="module" data-presets="react-classic">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -34,15 +34,10 @@
         
         const { useState, useEffect, useMemo } = React;
 
-        // =====================================================================
         // 管理者パスワード設定
-        // =====================================================================
-        const ADMIN_PASSWORD = "9331";
+        const ADMIN_PASSWORD = "matsu";
 
-        // 環境判定
         const isCanvasEnv = typeof __firebase_config !== 'undefined' && typeof __app_id !== 'undefined';
-
-        // 先生のFirebase設定情報
         const myFirebaseConfig = {
             apiKey: "AIzaSyCar5BfWLpkeMZY3CvQXWPafMcy7-3j0Ao",
             authDomain: "mendelapp-e8546.firebaseapp.com",
@@ -51,7 +46,6 @@
             messagingSenderId: "440177963313",
             appId: "1:440177963313:web:4a022fa480f2217aeb0010"
         };
-
         const firebaseConfig = isCanvasEnv ? JSON.parse(__firebase_config) : myFirebaseConfig;
         const currentAppId = isCanvasEnv ? __app_id : "matsumoto-mendel-1";
 
@@ -72,9 +66,13 @@
             const [error, setError] = useState(null);
             
             const [filterClass, setFilterClass] = useState('all');
-            const [showHelp, setShowHelp] = useState(false); // ヘルプモーダル表示用
+            const [showHelp, setShowHelp] = useState(false);
 
-            // 1. 認証プロセス
+            // タイマー用ステート
+            const [timerState, setTimerState] = useState({ endTime: null, isRunning: false });
+            const [timeLeft, setTimeLeft] = useState(null);
+            const [timerMinutes, setTimerMinutes] = useState(5); // 初期値5分
+
             useEffect(() => {
                 const initAuth = async () => {
                     try {
@@ -84,50 +82,34 @@
                             await signInAnonymously(auth);
                         }
                     } catch (e) {
-                        console.error("認証エラー詳細:", e);
                         setError(`認証エラー: ${e.message}`);
                     }
                 };
                 initAuth();
-
                 const unsubscribe = onAuthStateChanged(auth, setUser);
                 return () => unsubscribe();
             }, []);
 
-            // 2. リアルタイム同期
             useEffect(() => {
                 if (!user) return;
 
                 const dataRef = collection(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_data');
-                const q = query(dataRef);
-
-                const unsubscribe = onSnapshot(q, (snapshot) => {
+                const unsubscribeData = onSnapshot(query(dataRef), (snapshot) => {
                     const data = [];
-                    snapshot.forEach((doc) => {
-                        data.push({ id: doc.id, ...doc.data() });
-                    });
-                    
-                    data.sort((a, b) => {
-                        if (a.classGroup !== b.classGroup) return (a.classGroup || '').localeCompare(b.classGroup || '');
-                        return (a.name || '').localeCompare(b.name || '');
-                    });
+                    snapshot.forEach((doc) => data.push({ id: doc.id, ...doc.data() }));
                     setAllData(data);
 
-                    // リロード時のデータ復元処理
                     if (!isNameSet) {
                         const myDoc = data.find(d => d.id === user.uid);
                         if (myDoc && myDoc.name) {
                             if (myDoc.classGroup === '先生モード') {
                                 setClassGroup('先生モード');
                                 setName('先生');
-                                setMyCounts({ AA: 0, Aa: 0, aa: 0 }); // 先生はリロードで0に
+                                setMyCounts({ AA: 0, Aa: 0, aa: 0 });
                                 setIsNameSet(true);
                                 setFilterClass('all');
                                 setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_data', user.uid), {
-                                    classGroup: '先生モード',
-                                    name: '先生',
-                                    AA: 0, Aa: 0, aa: 0,
-                                    updatedAt: new Date().toISOString()
+                                    classGroup: '先生モード', name: '先生', AA: 0, Aa: 0, aa: 0, updatedAt: new Date().toISOString()
                                 }, { merge: true });
                             } else {
                                 setClassGroup(myDoc.classGroup || 'A組');
@@ -137,31 +119,46 @@
                             }
                         }
                     }
-                }, (err) => {
-                    console.error("同期エラー:", err);
-                    setError("データの読み込み権限がありません。");
                 });
-                return () => unsubscribe();
+
+                const timerRef = doc(db, 'artifacts', currentAppId, 'public', 'data', 'timer_state', 'global');
+                const unsubscribeTimer = onSnapshot(timerRef, (docSnap) => {
+                    if (docSnap.exists()) setTimerState(docSnap.data());
+                });
+
+                return () => { unsubscribeData(); unsubscribeTimer(); };
             }, [user, isNameSet]);
 
-            // 3. データの書き込み
+            useEffect(() => {
+                if (timerState.isRunning && timerState.endTime) {
+                    const interval = setInterval(() => {
+                        const diff = timerState.endTime - Date.now();
+                        if (diff <= 0) {
+                            setTimeLeft(0);
+                            clearInterval(interval);
+                        } else {
+                            setTimeLeft(diff);
+                        }
+                    }, 100);
+                    return () => clearInterval(interval);
+                } else {
+                    setTimeLeft(null);
+                }
+            }, [timerState]);
+
             const updateDB = async (newCounts, currentClassGroup, currentName) => {
                 if (!user) return;
                 try {
-                    const docRef = doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_data', user.uid);
-                    await setDoc(docRef, {
-                        classGroup: currentClassGroup,
-                        name: currentName,
-                        ...newCounts,
-                        updatedAt: new Date().toISOString()
+                    await setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_data', user.uid), {
+                        classGroup: currentClassGroup, name: currentName, ...newCounts, updatedAt: new Date().toISOString()
                     }, { merge: true });
                 } catch (e) {
-                    console.error("エラー:", e);
                     alert("データ保存に失敗しました。");
                 }
             };
 
             const handleIncrement = (type) => {
+                if (timeLeft === 0) return;
                 const newCounts = { ...myCounts, [type]: myCounts[type] + 1 };
                 setMyCounts(newCounts);
                 updateDB(newCounts, classGroup, name);
@@ -175,7 +172,6 @@
                 }
             };
 
-            // 先生モード用：直接入力
             const handleDirectInput = (type, value) => {
                 const num = value === '' ? 0 : parseInt(value, 10);
                 if (!isNaN(num) && num >= 0) {
@@ -207,31 +203,57 @@
 
             const handleReset = async () => {
                 const targetName = filterClass === 'all' ? '学年全体の全クラス' : filterClass;
-                if (!confirm(`本当に「${targetName}」のデータをすべて削除して 0 に戻しますか？\n（※この操作は取り消せません）`)) return;
+                if (!confirm(`本当に「${targetName}」のデータをすべて削除して 0 に戻しますか？`)) return;
                 try {
                     const targets = filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass);
-                    for (const d of targets) {
-                        await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_data', d.id));
-                    }
+                    for (const d of targets) await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_data', d.id));
                     alert(`${targetName} のデータをリセットしました。`);
                 } catch (e) {
-                    console.error("削除エラー:", e);
                     alert("データの削除に失敗しました。");
                 }
             };
 
-            const filteredData = useMemo(() => {
-                if (filterClass === 'all') return allData;
-                return allData.filter(d => d.classGroup === filterClass);
+            const startTimer = async (minutes) => {
+                const mins = parseInt(minutes, 10);
+                if (isNaN(mins) || mins <= 0) return;
+                const endTime = Date.now() + mins * 60 * 1000;
+                await setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'timer_state', 'global'), { endTime, isRunning: true });
+            };
+            
+            const stopTimer = async () => {
+                await setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'timer_state', 'global'), { endTime: null, isRunning: false });
+            };
+
+            const formatTime = (ms) => {
+                if (ms === null) return '';
+                const totalSeconds = Math.ceil(ms / 1000);
+                const m = Math.floor(totalSeconds / 60);
+                const s = totalSeconds % 60;
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            };
+
+            // ランキング処理（ピタリ賞廃止・試行回数順）
+            const processedData = useMemo(() => {
+                const targetData = filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass);
+                let maxTotal = 0;
+                const dataWithStats = targetData.filter(d => d.classGroup !== '先生モード').map(d => {
+                    const total = (d.AA || 0) + (d.Aa || 0) + (d.aa || 0);
+                    if (total > maxTotal) maxTotal = total;
+                    return { ...d, total };
+                });
+                return dataWithStats.map(d => ({
+                    ...d, isTopCount: d.total > 0 && d.total === maxTotal
+                })).sort((a, b) => b.total - a.total); 
             }, [allData, filterClass]);
 
             const totals = useMemo(() => {
-                return filteredData.reduce((acc, curr) => ({
-                    AA: acc.AA + (curr.AA || 0),
-                    Aa: acc.Aa + (curr.Aa || 0),
-                    aa: acc.aa + (curr.aa || 0)
-                }), { AA: 0, Aa: 0, aa: 0 });
-            }, [filteredData]);
+                return (filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass))
+                    .reduce((acc, curr) => ({
+                        AA: acc.AA + (curr.AA || 0),
+                        Aa: acc.Aa + (curr.Aa || 0),
+                        aa: acc.aa + (curr.aa || 0)
+                    }), { AA: 0, Aa: 0, aa: 0 });
+            }, [allData, filterClass]);
 
             const totalTrials = totals.AA + totals.Aa + totals.aa;
             const dominant = totals.AA + totals.Aa;
@@ -250,14 +272,12 @@
             if (error) return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold px-4 text-center">{error}</div>;
             if (!user) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">システムに接続中...</div>;
 
-            // ▼▼▼ ログイン前画面 ▼▼▼
+            // ▼ ログイン前画面
             if (!isNameSet) {
                 return (
                     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
                         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border-t-8 border-emerald-500 relative">
-                            {/* iボタン */}
                             <button onClick={() => setShowHelp(true)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center transition-colors font-serif italic" title="アプリの概要">i</button>
-                            
                             <h1 className="text-2xl font-bold text-center text-slate-800 mb-2">一遺伝子雑種 LIVE集計</h1>
                             <p className="text-center text-slate-500 mb-6 text-sm">自分のクラスと班名を入力してください</p>
                             <form onSubmit={handleJoin} className="space-y-5">
@@ -283,8 +303,7 @@
                                 </button>
                             </form>
                         </div>
-
-                        {/* ログイン前用のヘルプモーダル（概要） */}
+                        {/* ログイン前用のヘルプモーダル */}
                         {showHelp && (
                             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                                 <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
@@ -296,9 +315,9 @@
                                         <div>
                                             <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">🌟 この実験のねらい</h4>
                                             <ol className="list-decimal pl-5 space-y-2">
-                                                <li><b>仕組みを知る:</b> 減数分裂と受精によって、遺伝子がどう組み合わさるかを理解しよう！（パネットスクエアで説明できるようになろう）</li>
+                                                <li><b>仕組みを知る:</b> 減数分裂と受精によって、遺伝子がどう組み合わさるかを理解しよう！</li>
                                                 <li><b>大数の法則を体感:</b> 班のデータとクラス全員のデータを比べ、全体データが「3：1」に近づいていく美しさを確かめよう。</li>
-                                                <li><b>メンデルのすごさを知る:</b> クラス全員で協力しても数千回。1人で約3万回も実験したメンデルの熱意を感じてみよう！</li>
+                                                <li><b>メンデルのすごさを知る:</b> 1人で約3万回も実験したメンデルの熱意を感じてみよう！</li>
                                             </ol>
                                         </div>
                                         <div>
@@ -308,14 +327,10 @@
                                                     <ul className="list-none pl-2 mt-2 space-y-1 font-medium text-slate-600">
                                                         <li>・【♂ 雄カード】2枚（♂ A, ♂ a）</li>
                                                         <li>・【♀ 雌カード】2枚（♀ A, ♀ a）</li>
-                                                        <li className="text-xs mt-1 text-slate-500">※ 雄カードと雌カードは、裏面からは見分けがつかないようにしつつ、<b>表面の色を変えるなどして</b>区別できるように準備してください。</li>
+                                                        <li className="text-xs mt-1 text-slate-500">※ 表面の色を変えるなどして、雌雄を区別できるように準備してください。</li>
                                                     </ul>
                                                 </li>
                                             </ul>
-                                            <div className="mt-3 bg-emerald-50 p-3 rounded-lg border border-emerald-100 text-xs">
-                                                <span className="font-bold text-emerald-700">💡 なぜ色などを分けるの？</span><br/>
-                                                4枚から適当に2枚引くのではなく、「お父さんから1枚、お母さんから1枚」をもらうという『受精のルール』を正しく再現するためです。
-                                            </div>
                                         </div>
                                     </div>
                                     <div className="mt-6 text-center">
@@ -328,54 +343,76 @@
                 );
             }
 
-            // ▼▼▼ ログイン後メイン画面 ▼▼▼
+            // ▼ ログイン後メイン画面
             return (
                 <div className="min-h-screen pb-20">
                     <header className="bg-slate-800 text-white p-4 sticky top-0 z-20 shadow-md">
-                        <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:justify-between md:items-center gap-3">
-                            <h1 className="font-bold text-lg flex items-center gap-2">
+                        <div className="max-w-4xl mx-auto flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3">
+                            <h1 className="font-bold text-lg flex items-center gap-2 whitespace-nowrap">
                                 <i className="lucide-activity text-emerald-400"></i>
                                 LIVE集計：一遺伝子雑種
                             </h1>
-                            <div className="flex flex-col sm:flex-row items-center gap-2">
-                                <button onClick={() => setShowHelp(true)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm mr-2">
-                                    ？ 実験ルール
-                                </button>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {/* タイマー任意入力UI */}
+                                {classGroup === '先生モード' && (
+                                    <div className="flex items-center gap-1 bg-slate-700 p-1 pl-2 rounded-lg text-sm border border-slate-600">
+                                        <span className="font-bold text-slate-300">⏱</span>
+                                        <input 
+                                            type="number" min="1" max="60" 
+                                            value={timerMinutes} 
+                                            onChange={(e) => setTimerMinutes(e.target.value)}
+                                            className="w-10 text-center text-slate-800 rounded outline-none p-1 font-bold shadow-inner"
+                                        />
+                                        <span className="text-slate-300">分</span>
+                                        <button onClick={() => startTimer(timerMinutes)} className="bg-slate-600 hover:bg-emerald-500 text-white px-2 py-1 rounded transition-colors font-bold shadow-sm ml-1">開始</button>
+                                        <button onClick={stopTimer} className="bg-slate-600 hover:bg-red-500 text-white px-2 py-1 rounded transition-colors font-bold shadow-sm">停止</button>
+                                    </div>
+                                )}
+                                
+                                {/* 先生モード以外の時だけヘルプボタンを表示 */}
+                                {classGroup !== '先生モード' && (
+                                    <button onClick={() => setShowHelp(true)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                        ？ ルール
+                                    </button>
+                                )}
+
                                 <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
-                                    <span className="font-bold text-slate-300">集計対象:</span>
+                                    <span className="font-bold text-slate-300">対象:</span>
                                     <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-600 text-white font-bold py-1 px-2 rounded outline-none border border-slate-500 focus:border-emerald-400 cursor-pointer">
-                                        <option value="all">学年全体（すべて）</option>
+                                        <option value="all">学年全体</option>
                                         {CLASS_LIST.filter(c => c !== '先生モード').map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                 </div>
+
                                 {classGroup === '先生モード' && (
-                                    <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
-                                        データリセット
+                                    <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                        リセット
                                     </button>
                                 )}
                             </div>
                         </div>
                     </header>
 
+                    {/* タイマー表示バー */}
+                    {timeLeft !== null && (
+                        <div className={`w-full py-3 text-center font-black text-2xl md:text-3xl shadow-md sticky top-[72px] z-10 transition-colors ${timeLeft === 0 ? 'bg-red-500 text-white animate-pulse' : timeLeft < 10000 ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-800'}`}>
+                            {timeLeft === 0 ? '終了！！入力ストップ！' : `⏱ 残り ${formatTime(timeLeft)}`}
+                        </div>
+                    )}
+
                     <main className="max-w-4xl mx-auto p-4 space-y-6 mt-4">
                         <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 border-b pb-2 gap-2">
-                                <h2 className="text-lg font-bold text-slate-800">
-                                    {filterClass === 'all' ? '🏫 学年全体' : `📝 ${filterClass}`} のデータ
-                                </h2>
-                                <span className="font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-sm border border-emerald-100">
-                                    総試行回数: {totalTrials} 回
-                                </span>
+                                <h2 className="text-lg font-bold text-slate-800">{filterClass === 'all' ? '🏫 学年全体' : `📝 ${filterClass}`} のデータ</h2>
+                                <span className="font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full text-sm border border-emerald-100">総試行回数: {totalTrials} 回</span>
                             </div>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="flex flex-col items-center justify-center bg-slate-50 rounded-xl p-4 border border-slate-100">
                                     <h3 className="font-bold text-slate-600 mb-4">表現型の比率 (目標 3:1)</h3>
                                     <div className="relative w-40 h-40 mb-4 transform -rotate-90">
                                         <svg viewBox="0 0 140 140" className="w-full h-full">
                                             <circle cx="70" cy="70" r={radius} fill="transparent" stroke="#3b82f6" strokeWidth="20" />
-                                            <circle cx="70" cy="70" r={radius} fill="transparent" stroke="#10b981" strokeWidth="20" 
-                                                    strokeDasharray={strokeDasharray} className="transition-all duration-500 ease-out" />
+                                            <circle cx="70" cy="70" r={radius} fill="transparent" stroke="#10b981" strokeWidth="20" strokeDasharray={strokeDasharray} className="transition-all duration-500 ease-out" />
                                         </svg>
                                         <div className="absolute inset-0 flex flex-col items-center justify-center transform rotate-90">
                                             <span className="text-3xl font-bold text-slate-800">{totalTrials}</span>
@@ -409,8 +446,7 @@
                                                     <span className="text-slate-500">{count}回 (比: {ratio})</span>
                                                 </div>
                                                 <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                    <div className={`h-full ${type === 'aa' ? 'bg-blue-500' : 'bg-emerald-500'} transition-all duration-500`} 
-                                                         style={{ width: `${heightPct}%` }}></div>
+                                                    <div className={`h-full ${type === 'aa' ? 'bg-blue-500' : 'bg-emerald-500'} transition-all duration-500`} style={{ width: `${heightPct}%` }}></div>
                                                 </div>
                                             </div>
                                         );
@@ -423,32 +459,21 @@
                             <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-2">
                                 <h2 className="text-xl font-bold text-slate-800">🎯 {classGroup} - {name} の入力パネル</h2>
-                                <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
-                                    自分たちの記録: {myCounts.AA + myCounts.Aa + myCounts.aa} 回
-                                </span>
+                                <span className="text-sm font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">自分たちの記録: {myCounts.AA + myCounts.Aa + myCounts.aa} 回</span>
                             </div>
                             <div className="grid grid-cols-3 gap-3 md:gap-6">
                                 {['AA', 'Aa', 'aa'].map(type => (
                                     <div key={type} className="flex flex-col gap-2">
-                                        <button onClick={() => handleIncrement(type)} className={`${type === 'aa' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-emerald-500 hover:bg-emerald-600'} text-white rounded-xl p-4 md:p-8 flex flex-col items-center shadow-md active:scale-95 transition-transform`}>
+                                        <button onClick={() => handleIncrement(type)} disabled={timeLeft === 0} className={`${type === 'aa' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-emerald-500 hover:bg-emerald-600'} ${timeLeft === 0 ? 'opacity-50 cursor-not-allowed' : ''} text-white rounded-xl p-4 md:p-8 flex flex-col items-center shadow-md active:scale-95 transition-transform`}>
                                             <span className="text-2xl font-bold">＋ {type}</span>
                                         </button>
                                         <div className="flex items-center justify-between bg-slate-50 rounded-lg p-2 border border-slate-200">
-                                            <button onClick={() => handleDecrement(type)} className="w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors font-bold shadow-sm">－</button>
-                                            
+                                            <button onClick={() => handleDecrement(type)} disabled={timeLeft === 0} className={`w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 font-bold shadow-sm ${timeLeft === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:text-red-500 hover:border-red-200 transition-colors'}`}>－</button>
                                             {classGroup === '先生モード' ? (
-                                                <input 
-                                                    type="number" 
-                                                    min="0"
-                                                    value={myCounts[type] === 0 ? '' : myCounts[type]} 
-                                                    onChange={(e) => handleDirectInput(type, e.target.value)}
-                                                    className="w-20 text-center font-bold text-xl text-slate-700 bg-white border border-emerald-300 rounded focus:border-emerald-500 outline-none p-1 shadow-inner"
-                                                    placeholder="0"
-                                                />
+                                                <input type="number" min="0" value={myCounts[type] === 0 ? '' : myCounts[type]} onChange={(e) => handleDirectInput(type, e.target.value)} className="w-20 text-center font-bold text-xl text-slate-700 bg-white border border-emerald-300 rounded focus:border-emerald-500 outline-none p-1 shadow-inner" placeholder="0" />
                                             ) : (
                                                 <span className="font-bold text-xl text-slate-700">{myCounts[type]}</span>
                                             )}
-                                            
                                             <div className="w-8"></div>
                                         </div>
                                     </div>
@@ -456,23 +481,28 @@
                             </div>
                         </section>
 
-                        <section className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                        <section className="bg-slate-50 rounded-xl p-4 border border-slate-200 shadow-inner">
                             <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
-                                <h3 className="text-sm font-bold text-slate-600">
-                                    👥 {filterClass === 'all' ? '全クラスの状況' : `${filterClass}の状況`}
+                                <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                    🏆 {filterClass === 'all' ? '全クラスのランキング' : `${filterClass} ランキング`}
                                 </h3>
-                                <span className="text-xs font-bold text-slate-400">表示中: {filteredData.length}班</span>
+                                <div className="flex gap-3 text-xs font-bold text-slate-500">
+                                    <span className="flex items-center gap-1"><span className="text-yellow-500 text-base">👑</span>トップ</span>
+                                </div>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {filteredData.length === 0 ? (
+                                {processedData.length === 0 ? (
                                     <div className="col-span-full text-center text-slate-400 text-sm py-4">データがありません</div>
                                 ) : (
-                                    filteredData.map(d => (
-                                        <div key={d.id} className={`p-3 rounded-lg text-sm border shadow-sm ${d.id === user?.uid ? 'bg-emerald-50 border-emerald-300 ring-1 ring-emerald-200' : 'bg-white border-slate-200'}`}>
+                                    processedData.map(d => (
+                                        <div key={d.id} className={`relative p-3 rounded-lg text-sm border shadow-sm transition-all ${d.id === user?.uid ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-300 scale-105 z-10' : 'bg-white border-slate-200'}`}>
+                                            {d.isTopCount && <div className="absolute -top-2 -right-2 flex gap-1"><span className="bg-white rounded-full p-1 shadow border border-yellow-200 text-lg leading-none" title="最多試行回数！">👑</span></div>}
                                             <div className="text-xs font-bold text-emerald-500 mb-0.5">{d.classGroup}</div>
-                                            <div className="font-bold text-slate-700 truncate mb-1">{d.name}</div>
-                                            <div className="text-xs font-bold text-slate-500 bg-slate-100 rounded px-2 py-1 inline-block">
-                                                計 {(d.AA||0)+(d.Aa||0)+(d.aa||0)} 回
+                                            <div className="font-bold text-slate-800 truncate mb-1 text-base">{d.name}</div>
+                                            <div className="flex justify-between items-end">
+                                                <div className={`text-xs font-bold px-2 py-1 rounded inline-block ${d.isTopCount ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-500'}`}>
+                                                    計 {d.total} 回
+                                                </div>
                                             </div>
                                         </div>
                                     ))
@@ -481,14 +511,12 @@
                         </section>
                     </main>
 
-                    {/* ログイン後用のヘルプモーダル（実験ルール） */}
+                    {/* ログイン後用のヘルプモーダル */}
                     {showHelp && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                             <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
                                 <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center">✕</button>
-                                <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-emerald-200 pb-2">
-                                    📖 実験のルール
-                                </h2>
+                                <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-emerald-200 pb-2">📖 実験のルール</h2>
                                 <div className="space-y-4 text-sm text-slate-700">
                                     <h3 className="font-bold text-emerald-600 text-base">🎯 F2の分離比 3 : 1 をみんなで確かめよう!</h3>
                                     <ol className="list-decimal pl-5 space-y-3">
