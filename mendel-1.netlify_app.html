@@ -425,7 +425,7 @@
                                     </h2>
                                     <div className="space-y-6 text-sm text-slate-700">
                                         <div>
-                                            <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">🌟 この実験のねらい</h4>
+                                            <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">この実験のねらい</h4>
                                             <ol className="list-decimal pl-5 space-y-2">
                                                 <li><b>仕組みを知る:</b> 減数分裂と受精によって、遺伝子がどう組み合わさるかを理解しよう！</li>
                                                 <li><b>大数の法則を体感:</b> 班のデータとクラス全員のデータを比べ、全体データが「3：1」に近づいていく美しさを確かめよう。</li>
@@ -433,12 +433,12 @@
                                             </ol>
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">🎒 準備するもの</h4>
+                                            <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">準備するもの</h4>
                                             <ul className="list-disc pl-5 space-y-1">
                                                 <li><b>トランプ型カード（各班1セット）</b>
                                                     <ul className="list-none pl-2 mt-2 space-y-1 font-medium text-slate-600">
-                                                        <li>・【♂ 雄カード】2枚（♂ A, ♂ a）</li>
-                                                        <li>・【♀ 雌カード】2枚（♀ A, ♀ a）</li>
+                                                        <li>・【雄カード】2枚（A, a）</li>
+                                                        <li>・【雌カード】2枚（A, a）</li>
                                                         <li className="text-xs mt-1 text-slate-500">※ 表面の色を変えるなどして、雌雄を区別できるように準備してください。</li>
                                                     </ul>
                                                 </li>
@@ -457,78 +457,78 @@
 
             return (
                 <div className="min-h-screen pb-20">
-                    <header className="bg-slate-800 text-white p-4 sticky top-0 z-40 shadow-md">
-                        <div className="max-w-4xl mx-auto flex flex-col xl:flex-row xl:justify-between xl:items-center gap-3">
-                            <h1 className="font-bold text-lg flex items-center gap-2 whitespace-nowrap">
-                                <i className="lucide-activity text-emerald-400"></i>
-                                LIVE集計：一遺伝子雑種
-                            </h1>
-                            <div className="flex flex-wrap items-center gap-2">
-                                {classGroup === '先生モード' && (
-                                    <div className="flex items-center gap-1 bg-slate-700 p-1 pl-2 rounded-lg text-sm border border-slate-600">
-                                        <span className="font-bold text-slate-300">⏱</span>
-                                        <input 
-                                            type="number" min="1" max="60" 
-                                            value={timerMinutes} 
-                                            onChange={(e) => setTimerMinutes(e.target.value)}
-                                            className="w-10 text-center text-slate-800 rounded outline-none p-1 font-bold shadow-inner"
-                                        />
-                                        <span className="text-slate-300">分</span>
-                                        <button onClick={() => startTimer(timerMinutes)} className="bg-slate-600 hover:bg-emerald-500 text-white px-2 py-1 rounded transition-colors font-bold shadow-sm ml-1">開始</button>
-                                        <button onClick={stopTimer} className="bg-slate-600 hover:bg-red-500 text-white px-2 py-1 rounded transition-colors font-bold shadow-sm">停止</button>
-                                    </div>
-                                )}
-                                
-                                {/* ▼ 変更：先生モードの時は「？ マニュアル」に変化 */}
-                                <button onClick={() => setShowHelp(true)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm mr-2">
-                                    {classGroup === '先生モード' ? '？ マニュアル' : '？ ルール'}
-                                </button>
-                                
-                                {classGroup !== '先生モード' && (
-                                    <div className="flex items-center gap-1 bg-slate-700 px-3 py-1.5 rounded-lg text-sm font-bold text-slate-200">
-                                         {classGroup}
-                                    </div>
-                                )}
+                    <div className="sticky top-0 z-40 w-full flex flex-col shadow-md">
+                        <header className="bg-slate-800 text-white p-3 md:p-4">
+                            <div className="max-w-4xl mx-auto flex flex-col lg:flex-row lg:justify-between lg:items-center gap-2 md:gap-3">
+                                <h1 className="font-bold text-lg flex items-center gap-2 whitespace-nowrap">
+                                    <i className="lucide-activity text-emerald-400"></i>
+                                    LIVE集計：一遺伝子雑種
+                                </h1>
+                                <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                                    {classGroup === '先生モード' && (
+                                        <div className="flex items-center gap-1 bg-slate-700 p-1 pl-2 rounded-lg text-sm border border-slate-600">
+                                            <span className="font-bold text-slate-300">⏱</span>
+                                            <input 
+                                                type="number" min="1" max="60" 
+                                                value={timerMinutes} 
+                                                onChange={(e) => setTimerMinutes(e.target.value)}
+                                                className="w-10 text-center text-slate-800 rounded outline-none p-0.5 font-bold shadow-inner"
+                                            />
+                                            <span className="text-slate-300">分</span>
+                                            <button onClick={() => startTimer(timerMinutes)} className="bg-slate-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded transition-colors font-bold shadow-sm ml-1">開始</button>
+                                            <button onClick={stopTimer} className="bg-slate-600 hover:bg-red-500 text-white px-2 py-0.5 rounded transition-colors font-bold shadow-sm">停止</button>
+                                        </div>
+                                    )}
+                                    
+                                    <button onClick={() => setShowHelp(true)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1 px-2 md:px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                        {classGroup === '先生モード' ? '？ マニュアル' : '？ ルール'}
+                                    </button>
+                                    
+                                    {classGroup !== '先生モード' && (
+                                        <div className="flex items-center gap-1 bg-slate-700 px-2 md:px-3 py-1 rounded-lg text-sm font-bold text-slate-200">
+                                            📍 {classGroup}
+                                        </div>
+                                    )}
 
-                                {classGroup === '先生モード' && (
-                                    <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
-                                        <span className="font-bold text-slate-300">対象:</span>
-                                        <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-600 text-white font-bold py-1 px-2 rounded outline-none border border-slate-500 focus:border-emerald-400 cursor-pointer">
-                                            <option value="simulation">👨‍🏫 デモ (シミュレーション)</option>
-                                            <option value="all">🏫 学年全体（生徒のみ）</option>
-                                            {CLASS_LIST.filter(c => c !== '先生モード').map(c => <option key={c} value={c}>{c}</option>)}
-                                        </select>
-                                    </div>
-                                )}
+                                    {classGroup === '先生モード' && (
+                                        <div className="flex items-center gap-1.5 bg-slate-700 p-1 pl-2 rounded-lg text-sm">
+                                            <span className="font-bold text-slate-300">対象:</span>
+                                            <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-600 text-white font-bold py-0.5 px-1 rounded outline-none border border-slate-500 focus:border-emerald-400 cursor-pointer">
+                                                <option value="simulation">デモ</option>
+                                                <option value="all">学年全体</option>
+                                                {CLASS_LIST.filter(c => c !== '先生モード').map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
 
-                                {classGroup === '先生モード' && (
-                                    <>
-                                        <button onClick={handleExportCSV} className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
-                                            CSV出力
-                                        </button>
-                                        <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
-                                            リセット
-                                        </button>
-                                    </>
-                                )}
+                                    {classGroup === '先生モード' && (
+                                        <>
+                                            <button onClick={handleExportCSV} className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-1 px-2 md:px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                                CSV
+                                            </button>
+                                            <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-2 md:px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                                リセット
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </header>
+                        </header>
 
-                    {/* ▼ 変更：タイマー状態と連動したステータスバー */}
-                    <div className={`w-full text-center font-black shadow-md sticky top-[72px] z-30 transition-colors ${
-                        activeTimerClass === 'all' ? 'bg-slate-200 text-slate-600 py-3 text-xl md:text-2xl' :
-                        currentTimerState.isRunning && timeLeft > 0 && timeLeft <= 10000 ? 'bg-red-100 text-red-600 py-3 text-2xl md:text-3xl' :
-                        currentTimerState.isRunning && timeLeft > 10000 ? 'bg-emerald-100 text-emerald-800 py-3 text-2xl md:text-3xl' :
-                        currentTimerState.isRunning && timeLeft === 0 ? 'bg-red-500 text-white animate-pulse py-3 text-2xl md:text-3xl' :
-                        'bg-slate-200 text-slate-600 py-3 text-xl md:text-2xl'
-                    }`}>
-                        {
-                            activeTimerClass === 'all' ? 'ℹ️ 対象クラスを選択してタイマーを使用' :
-                            currentTimerState.isRunning && timeLeft > 0 ? `⏱ 残り ${formatTime(timeLeft)}` :
-                            currentTimerState.isRunning && timeLeft === 0 ? '終了！！入力ストップ！' :
-                            '⏸ 待機中（タイマー開始で入力可能になります）'
-                        }
+                        <div className={`w-full text-center font-black transition-colors ${
+                            activeTimerClass === 'all' ? 'bg-slate-200 text-slate-600 py-2 text-sm md:text-base' :
+                            currentTimerState.isRunning && timeLeft > 0 && timeLeft <= 10000 ? 'bg-red-100 text-red-600 py-2 md:py-3 text-2xl md:text-3xl' :
+                            currentTimerState.isRunning && timeLeft > 10000 ? 'bg-emerald-100 text-emerald-800 py-2 md:py-3 text-2xl md:text-3xl' :
+                            currentTimerState.isRunning && timeLeft === 0 ? 'bg-red-500 text-white animate-pulse py-2 md:py-3 text-2xl md:text-3xl' :
+                            'bg-slate-200 text-slate-600 py-2 md:py-3 text-xl md:text-2xl'
+                        }`}>
+                            {
+                                activeTimerClass === 'all' ? 'ℹ️ 対象クラスを選択してタイマーを使用' :
+                                currentTimerState.isRunning && timeLeft > 0 ? `⏱ 残り ${formatTime(timeLeft)}` :
+                                currentTimerState.isRunning && timeLeft === 0 ? '終了！！入力ストップ！' :
+                                '⏸ 待機中（タイマー開始で入力可能になります）'
+                            }
+                        </div>
                     </div>
 
                     <main className="max-w-4xl mx-auto p-4 space-y-6 mt-4">
@@ -588,7 +588,6 @@
                             </div>
                         </section>
 
-                        {/* ▼ 変更：先生モードで対象がシミュレーション以外の時は入力パネルを非表示にする */}
                         {(classGroup !== '先生モード' || filterClass === 'simulation') && (
                             <section className="bg-white rounded-2xl shadow-lg border-2 border-emerald-500 p-4 md:p-6 relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-full h-2 bg-emerald-500"></div>
@@ -622,10 +621,10 @@
                         <section className="bg-slate-50 rounded-xl p-4 border border-slate-200 shadow-inner">
                             <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
                                 <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                                    🏆 {classGroup === '先生モード' ? (filterClass === 'simulation' ? 'シミュレーションデータ' : filterClass === 'all' ? '全クラス（生徒）ランキング' : `${filterClass} ランキング`) : `${classGroup}のランキング`}
+                                    🏆 {classGroup === '先生モード' ? (filterClass === 'simulation' ? 'シミュレーションデータ' : filterClass === 'all' ? 'ランキング（全クラス）' : `${filterClass} ランキング`) : `ランキング`}
                                 </h3>
                                 <div className="flex gap-3 text-xs font-bold text-slate-500">
-                                    <span className="flex items-center gap-1"><span className="text-yellow-500 text-base">👑</span>トップ</span>
+                                    <span className="flex items-center gap-1"><span className="bg-yellow-400 text-white px-1.5 py-0.5 rounded text-[10px]">TOP</span> トップ</span>
                                 </div>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -634,7 +633,6 @@
                                 ) : (
                                     processedData.map(d => (
                                         <div key={d.id} className={`relative p-3 rounded-lg text-sm border shadow-sm transition-all ${d.id === user?.uid ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-300 scale-105 z-10' : 'bg-white border-slate-200'}`}>
-                                            {/* 先生モード時のみ：強制ログアウト（✕）ボタン */}
                                             {classGroup === '先生モード' && d.classGroup !== '先生モード' && (
                                                 <button 
                                                     onClick={() => handleKick(d.id, d.classGroup, d.name)}
@@ -642,7 +640,7 @@
                                                     title="この班のデータを消去して強制ログアウト"
                                                 >✕</button>
                                             )}
-                                            {d.isTopCount && <div className="absolute -top-2 -right-2 flex gap-1"><span className="bg-white rounded-full p-1 shadow border border-yellow-200 text-lg leading-none" title="最多試行回数！">👑</span></div>}
+                                            {d.isTopCount && <div className="absolute -top-2 -right-2 flex gap-1"><span className="bg-yellow-400 text-white px-1.5 py-0.5 rounded text-[10px] font-bold shadow border border-yellow-500" title="最多試行回数！">TOP</span></div>}
                                             <div className="text-xs font-bold text-emerald-500 mb-0.5">{d.classGroup}</div>
                                             <div className="font-bold text-slate-800 truncate mb-1 text-base">{d.name}</div>
                                             <div className="flex justify-between items-end">
@@ -657,7 +655,6 @@
                         </section>
                     </main>
 
-                    {/* ▼ 変更：先生モードの時はマニュアルを表示する */}
                     {showHelp && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
                             <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
