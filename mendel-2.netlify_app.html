@@ -351,7 +351,7 @@
                                     onClick={() => setShowHelp(true)}
                                     className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm mr-2"
                                 >
-                                    <span className="font-serif italic text-base leading-none">i</span> 概要・ルール
+                                    ？ 実験ルール
                                 </button>
                                 <div className="flex items-center gap-2 bg-slate-700 p-1 pl-3 rounded-lg text-sm">
                                     <span className="font-bold text-slate-300">集計対象:</span>
@@ -522,62 +522,31 @@
                     {/* ヘルプモーダル（ルール説明） */}
                     {showHelp && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                            <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
+                            <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
                                 <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center">✕</button>
-                                <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-blue-200 pb-2 flex items-center gap-2">
-                                    <span className="font-serif italic text-blue-600">i</span> アプリの概要と実験ルール
+                                <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-blue-200 pb-2">
+                                    📖 実験のルール
                                 </h2>
-                                <div className="space-y-6 text-sm text-slate-700">
-                                    {/* 1. 本時の目標 */}
-                                    <div>
-                                        <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">1. 本時の目標</h4>
-                                        <ol className="list-decimal pl-5 space-y-1">
-                                            <li><b>知識・理解:</b> 2対の対立遺伝子がそれぞれ独立して配偶子に分配されること（独立の法則）を理解し、16マスのパネットスクエアを用いてF2の遺伝子型・表現型を説明できる。</li>
-                                            <li><b>技能・思考:</b> カードを用いた模擬実験とLIVE集計を通して、2つの形質の遺伝が全体として「9：3：3：1」に収束していく現象を見いだすことができる。</li>
-                                            <li><b>態度:</b> 複雑に見える生命現象（2つの形質の遺伝）の背後に、単純な数学的規則性（3:1の掛け合わせ）が隠れていることの美しさに気づき、生命科学への探究心を深める。</li>
-                                        </ol>
-                                    </div>
-                                    {/* 2. 準備物 */}
-                                    <div>
-                                        <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">2. 準備物（教具）</h4>
-                                        <ul className="list-disc pl-5 space-y-1">
-                                            <li><b>カードセット 二遺伝子雑種Ver.（各班1セット）</b>
-                                                <ul className="list-disc pl-5 mt-1 space-y-1">
-                                                    <li><b>仕様:</b> トランプ様のカード。</li>
-                                                    <li><b>構成:</b>
-                                                        <ul className="list-none pl-2 mt-1 space-y-1">
-                                                            <li>・雄（♂）用カード：青系色で「♂ AB」「♂ Ab」「♂ aB」「♂ ab」と明記（計4枚）</li>
-                                                            <li>・雌（♀）用カード：赤系色で「♀ AB」「♀ Ab」「♀ aB」「♀ ab」と明記（計4枚）</li>
-                                                        </ul>
-                                                    </li>
-                                                </ul>
-                                            </li>
-                                        </ul>
-                                        <p className="mt-2 text-xs text-slate-500 italic">※工夫の意図: 独立の法則により、F1（AaBb）から生じる4種類の生殖細胞が1:1:1:1の割合で作られることを物理的に再現する。</p>
-                                    </div>
-                                    {/* 3. 実験のルール */}
-                                    <div>
-                                        <h4 className="font-bold text-slate-800 bg-blue-100 text-blue-800 px-2 py-1 rounded inline-block mb-2">3. 実験のルール</h4>
-                                        <h5 className="font-bold text-blue-600 mb-2">🎯 独立の法則 9 : 3 : 3 : 1 を確かめよう!</h5>
-                                        <ol className="list-decimal pl-5 space-y-2">
-                                            <li><b>♂役と♀役を決め、それぞれAB, Ab, aB, ab の4枚のカード</b>を裏向きにして持ち、相手に見えないようにシャッフルする。</li>
-                                            <li>互いに相手の手札から、1枚ずつカードを引く。</li>
-                                            <li>引いた2枚のカードを組み合わせて、<b>表現型（丸・黄など）</b>を確認する。
-                                                <ul className="list-disc pl-5 mt-2 space-y-1 text-slate-600 font-medium">
-                                                    <li><b>[AB]（丸・黄）</b>　←遺伝子型：<b>A_B_</b></li>
-                                                    <li><b>[Ab]（丸・緑）</b>　←遺伝子型：<b>A_bb</b></li>
-                                                    <li><b>[aB]（しわ・黄）</b>←遺伝子型：<b>aaB_</b></li>
-                                                    <li><b>[ab]（しわ・緑）</b>←遺伝子型：<b>aabb</b></li>
-                                                </ul>
-                                            </li>
-                                            <li>代表者が、対応する表現型の<b>＋ボタン</b>を1回タップして入力する。<br/>
-                                                <span className="text-xs text-slate-500 font-bold">※間違えて押してしまったら、下のマイナスを押して消す。</span>
-                                            </li>
-                                            <li>引いたカードを戻して再度シャッフルし、2〜5を繰り返す。<br/>
-                                                <span className="text-xs text-blue-600 font-bold">（1つの班で何回やってもOK！たくさんデータを集めよう）</span>
-                                            </li>
-                                        </ol>
-                                    </div>
+                                <div className="space-y-4 text-sm text-slate-700">
+                                    <h3 className="font-bold text-blue-600 text-base">🎯 独立の法則 9 : 3 : 3 : 1 を確かめよう!</h3>
+                                    <ol className="list-decimal pl-5 space-y-3">
+                                        <li><b>♂役と♀役を決め、それぞれAB, Ab, aB, ab の4枚のカード</b>を裏向きにして持ち、相手に見えないようにシャッフルする。</li>
+                                        <li>互いに相手の手札から、1枚ずつカードを引く。</li>
+                                        <li>引いた2枚のカードを組み合わせて、<b>表現型（丸・黄など）</b>を確認する。
+                                            <ul className="list-disc pl-5 mt-2 space-y-1 text-slate-600 font-medium">
+                                                <li><b>[AB]（丸・黄）</b>　←遺伝子型：<b>A_B_</b></li>
+                                                <li><b>[Ab]（丸・緑）</b>　←遺伝子型：<b>A_bb</b></li>
+                                                <li><b>[aB]（しわ・黄）</b>←遺伝子型：<b>aaB_</b></li>
+                                                <li><b>[ab]（しわ・緑）</b>←遺伝子型：<b>aabb</b></li>
+                                            </ul>
+                                        </li>
+                                        <li>代表者が、対応する表現型の<b>＋ボタン</b>を1回タップして入力する。<br/>
+                                            <span className="text-xs text-slate-500 font-bold">※間違えて押してしまったら、下のマイナスを押して消す。</span>
+                                        </li>
+                                        <li>引いたカードを戻して再度シャッフルし、2〜5を繰り返す。<br/>
+                                            <span className="text-xs text-blue-600 font-bold">（1つの班で何回やってもOK！たくさんデータを集めよう）</span>
+                                        </li>
+                                    </ol>
                                 </div>
                                 <div className="mt-6 text-center">
                                     <button onClick={() => setShowHelp(false)} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-8 rounded-lg shadow-sm">閉じる</button>
