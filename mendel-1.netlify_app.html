@@ -250,6 +250,46 @@
                 await setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'timer_state', 'global'), { endTime: null, isRunning: false });
             };
 
+            // --- 新設：CSVエクスポート機能 ---
+            const handleExportCSV = () => {
+                const targetData = filterClass === 'all' ? allData : allData.filter(d => d.classGroup === filterClass);
+                if (targetData.length === 0) {
+                    alert("出力するデータがありません。");
+                    return;
+                }
+                
+                // BOM（Excelでの文字化け防止用）
+                const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+                let csvContent = "クラス,班名,AA,Aa,aa,合計\n";
+                
+                targetData.forEach(d => {
+                    const aa = d.AA || 0;
+                    const Aa = d.Aa || 0;
+                    const a_a = d.aa || 0;
+                    const total = aa + Aa + a_a;
+                    const escape = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
+                    csvContent += `${escape(d.classGroup)},${escape(d.name)},${aa},${Aa},${a_a},${total}\n`;
+                });
+                
+                const blob = new Blob([bom, csvContent], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                
+                const now = new Date();
+                const yyyy = now.getFullYear();
+                const mm = String(now.getMonth() + 1).padStart(2, '0');
+                const dd = String(now.getDate()).padStart(2, '0');
+                const hh = String(now.getHours()).padStart(2, '0');
+                const min = String(now.getMinutes()).padStart(2, '0');
+                link.download = `一遺伝子雑種_${yyyy}${mm}${dd}_${hh}${min}.csv`;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            };
+
             const formatTime = (ms) => {
                 if (ms === null) return '';
                 const totalSeconds = Math.ceil(ms / 1000);
@@ -421,9 +461,14 @@
                                 )}
 
                                 {classGroup === '先生モード' && (
-                                    <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
-                                        リセット
-                                    </button>
+                                    <>
+                                        <button onClick={handleExportCSV} className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                            CSV出力
+                                        </button>
+                                        <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1.5 px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                            リセット
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -569,6 +614,7 @@
                                             <ul className="space-y-3">
                                                 <li><b className="text-emerald-600">⏱ タイマー連動</b><br/>開始すると全員の端末にカウントダウンが表示され、0になると生徒は入力できなくなります。</li>
                                                 <li><b className="text-emerald-600">👁 対象クラスの切り替え</b><br/>グラフとランキングを特定のクラスに絞り込めます。（生徒画面は自クラスのランキングのみに固定されています）</li>
+                                                <li><b className="text-emerald-600">📥 CSVダウンロード</b><br/>現在表示している対象クラスのデータをCSVファイルでダウンロードできます。Excelでの成績処理等にご活用ください。</li>
                                                 <li><b className="text-emerald-600">🔄 全データリセット</b><br/>現在表示している対象クラスの全データを一括で 0 に戻します。</li>
                                                 <li><b className="text-emerald-600">👢 強制ログアウト（キック）</b><br/>各班の「✕」ボタンを押すとその班のデータを消去し、対象生徒を初期画面に強制的に戻します。（登録間違いやイタズラ対応用）</li>
                                                 <li><b className="text-emerald-600">⌨️ デモ用 直接入力</b><br/>先生自身の入力パネルは数値を直接打ち込めます。また、ブラウザをリロードするだけで先生のデータは 0 にリセットされます。</li>
