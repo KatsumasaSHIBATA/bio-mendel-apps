@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学習指導案：二遺伝子雑種とLIVE集計</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+        body { font-family: 'Noto Sans JP', sans-serif; }
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .print-shadow-none { box-shadow: none !important; border: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 pb-20 print:pb-0">
+
+    <!-- ヘッダー（印刷時は非表示） -->
+    <div class="no-print bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <h1 class="font-bold flex items-center gap-2">
+                <i data-lucide="book-open" class="w-5 h-5 text-blue-400"></i>
+                理科（生物）学習指導案
+            </h1>
+            <div class="flex gap-3">
+                <a href="./index.html" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+                    ポータルに戻る
+                </a>
+                <button onclick="window.print()" class="text-sm bg-blue-500 hover:bg-blue-600 font-bold px-3 py-1.5 rounded shadow transition-colors flex items-center gap-1">
+                    <i data-lucide="printer" class="w-4 h-4"></i> 印刷する
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 指導案 本文 -->
+    <main class="max-w-4xl mx-auto mt-8 bg-white p-10 md:p-16 rounded-xl shadow-lg print-shadow-none border-t-8 border-blue-500">
+        
+        <header class="text-center mb-12 border-b-4 border-blue-500 pb-8">
+            <h1 class="text-3xl font-black text-slate-800 mb-6 tracking-tight">理科（生物）学習指導案<br><span class="text-2xl text-blue-600 mt-2 block">メンデル遺伝（二遺伝子雑種）とカード実験</span></h1>
+            
+            <div class="flex flex-wrap justify-center gap-4 text-sm font-bold text-slate-600">
+                <span class="bg-slate-100 px-4 py-2 rounded-full border border-slate-200">対象学年: 中学2年 理科（中高一貫）</span>
+                <span class="bg-slate-100 px-4 py-2 rounded-full border border-slate-200">単元: 第7章 第1節 遺伝のきまり・2遺伝子雑種</span>
+                <span class="bg-slate-100 px-4 py-2 rounded-full border border-slate-200">所要時間: 50分（1コマ）</span>
+            </div>
+        </header>
+
+        <div class="space-y-12">
+            
+            <!-- 1. 本時の目標 -->
+            <section>
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-4">
+                    <span class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center">1</span>
+                    本時の目標
+                </h2>
+                <div class="bg-blue-50 p-6 rounded-lg border border-blue-100 space-y-4">
+                    <div>
+                        <h3 class="font-bold text-blue-800 text-sm mb-1">知識・理解</h3>
+                        <p class="text-slate-700 leading-relaxed">2対の対立遺伝子がそれぞれ独立して配偶子に分配されること（独立の法則）を、カードの染色体デザインを通して視覚的に理解し、16マスのパネットスクエアを用いて説明できる。</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-blue-800 text-sm mb-1">技能・思考</h3>
+                        <p class="text-slate-700 leading-relaxed">ゲーム性のある模擬実験とLIVE集計を通して、2つの形質の遺伝が全体として「9：3：3：1」に収束していく現象を見いだすことができる。</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-blue-800 text-sm mb-1">態度</h3>
+                        <p class="text-slate-700 leading-relaxed">複雑に見える生命現象の背後に、単純な数学的規則性（3:1の掛け合わせ）が隠れていることの美しさに気づき、生命科学への探究心を深める。</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. 準備物 -->
+            <section>
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-4">
+                    <span class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center">2</span>
+                    準備物（教具）
+                </h2>
+                <ul class="space-y-4 text-slate-700 pl-2">
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle-2" class="w-6 h-6 text-blue-500 shrink-0 mt-0.5"></i>
+                        <div>
+                            <strong>生徒用学習端末（タブレット・Chromebook等）および ロイロノート</strong>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle-2" class="w-6 h-6 text-blue-500 shrink-0 mt-0.5"></i>
+                        <div>
+                            <strong>メンデル遺伝 実験ポータルサイト</strong>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle-2" class="w-6 h-6 text-blue-500 shrink-0 mt-0.5"></i>
+                        <div>
+                            <strong>TCG風カードセット 二遺伝子雑種Ver.（各班1セット）</strong>
+                            <ul class="list-disc pl-5 mt-2 space-y-1 text-sm text-slate-600">
+                                <li><span class="font-bold">作成方法:</span> 事前に教員がポータルサイトの「二遺伝子雑種 TCG風カードメーカー」からA4厚紙等に印刷・裁断しておく。</li>
+                                <li><span class="font-bold">構成:</span> 配偶子カード全4種（AB, Ab, aB, ab）の♂用・♀用セット。</li>
+                            </ul>
+                            <div class="mt-2 text-sm bg-yellow-50 border border-yellow-200 p-3 rounded text-yellow-800">
+                                💡 <strong>工夫の意図（独立の法則の視覚化）:</strong> カードイラストの中央には、A(a)の遺伝子が乗った「長い染色体」と、B(b)の遺伝子が乗った「短い染色体」が描かれています。これにより「2つの形質を決める遺伝子は、別々の染色体に乗っているから互いに影響せずランダムに分配される」という重要概念が直感的にわかります。
+                            </div>
+                        </div>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <i data-lucide="check-circle-2" class="w-6 h-6 text-blue-500 shrink-0 mt-0.5"></i>
+                        <div>
+                            <strong>プロジェクター</strong>（教員がアプリの「クラス全体」集計画面を投影）
+                        </div>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- 3. 本時の展開 -->
+            <section>
+                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
+                    <span class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center">3</span>
+                    本時の展開（50分）
+                </h2>
+                
+                <div class="relative border-l-4 border-slate-200 ml-4 space-y-8 pb-4">
+                    
+                    <!-- 導入 -->
+                    <div class="relative pl-6">
+                        <div class="absolute w-4 h-4 bg-blue-500 rounded-full -left-[10px] top-1.5 border-4 border-white"></div>
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-3">
+                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm font-black border border-blue-200">10分</span>
+                            【導入】知識の拡張と「問い」の提示
+                        </h3>
+                        <div class="mt-3 space-y-3 text-slate-700 pl-1">
+                            <div>
+                                <strong class="text-blue-700">▶ 前回の復習と課題設定（プリント№18準拠）</strong>
+                                <p class="text-sm mt-1 leading-relaxed">「今回は形質を2つ（種子の形 A/a、子葉の色 B/b）同時に考える。」</p>
+                            </div>
+                            <div>
+                                <strong class="text-blue-700">▶ 本時の「問い」の設定</strong>
+                                <p class="text-sm mt-1 leading-relaxed font-bold bg-slate-50 p-2 rounded border border-slate-200">「丸・黄の純系（AABB）としわ・緑の純系（aabb）を交配してできたF1（AaBb）同士を自家受精させると、孫（F2）の表現型はどんな割合で現れるか？」</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 展開 -->
+                    <div class="relative pl-6">
+                        <div class="absolute w-4 h-4 bg-blue-500 rounded-full -left-[10px] top-1.5 border-4 border-white"></div>
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-3">
+                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm font-black border border-blue-200">25分</span>
+                            【展開】TCG風カード実験（4×4）とLIVE集計
+                        </h3>
+                        <div class="mt-3 space-y-4 text-slate-700 pl-1">
+                            <div>
+                                <strong class="text-blue-700">▶ 実験ルールと「独立の法則」の体感 (5分)</strong>
+                                <ul class="list-disc pl-5 text-sm mt-1 space-y-1">
+                                    <li>2人1組にTCG風カードを配布。減数分裂時に染色体がランダムに分かれること（＝ <strong>独立の法則</strong> ）を視覚的に確認させる。</li>
+                                    <li>生徒は前回と同じ実験ポータルサイト、あるいは「二遺伝子雑種 LIVE集計」を開き、ログインする。</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <strong class="text-blue-700">▶ 実験スタート＆リアルタイム集計 (20分)</strong>
+                                <ul class="list-disc pl-5 text-sm mt-1 space-y-1">
+                                    <li>互いに4種類のカードからランダムに1枚ずつ引き、2枚を組み合わせて表現型を判定し、アプリに入力する。</li>
+                                    <li>スクリーンにはクラス全体の集計を投影。バラバラだったグラフが「9.0：3.0：3.0：1.0」へと収束していく劇的な瞬間を共有する。</li>
+                                </ul>
+                                <div class="mt-2 text-sm bg-emerald-50 border border-emerald-200 p-3 rounded text-emerald-800">
+                                    🎯 <strong>ねらい:</strong> TCG風のデザインにより、生徒は「1/16の確率の『ab』同士（完全な潜性個体）を引き当てたい！」といったカードゲーム感覚で熱中し、高速で試行回数を稼ぎます。
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- まとめ -->
+                    <div class="relative pl-6">
+                        <div class="absolute w-4 h-4 bg-blue-500 rounded-full -left-[10px] top-1.5 border-4 border-white"></div>
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-3">
+                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm font-black border border-blue-200">15分</span>
+                            【まとめ】16マスのパネットスクエアと「法則の美しさ」
+                        </h3>
+                        <div class="mt-3 space-y-3 text-slate-700 pl-1">
+                            <div>
+                                <strong class="text-blue-700">▶ 「なぜ 9:3:3:1 になるのか」の理論解説</strong>
+                                <p class="text-sm mt-1 leading-relaxed">実験の事実をふまえ、プリントの16マス（4通り×4通り）のパネットスクエアを板書で完成させる。</p>
+                            </div>
+                            <div>
+                                <strong class="text-blue-700">▶ 独立の法則の真骨頂（数学的な視点）</strong>
+                                <ul class="list-disc pl-5 text-sm mt-1 space-y-1">
+                                    <li>集計データから、「形」だけで再集計すると（9+3）：（3+1）＝12：4＝「3：1」になることを確認。</li>
+                                    <li>「色」だけで再集計しても同様に「3：1」になることを確認。</li>
+                                </ul>
+                                <p class="text-sm mt-3 font-bold bg-slate-100 p-3 rounded">
+                                    「2つの形質が混ざって複雑に見えても、それぞれは全く独立して『3:1』のルールを守っている。だから（3:1）×（3:1）＝ 9:3:3:1 になる。これが独立の法則の真の美しさである」<br>
+                                    <span class="font-normal text-slate-500">とまとめ、深い納得感へと導く。</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- 4. 授業成功のポイント -->
+            <section class="bg-slate-800 text-white p-6 md:p-8 rounded-xl mt-8">
+                <h2 class="text-xl font-bold flex items-center gap-2 mb-6 border-b border-slate-600 pb-3">
+                    <i data-lucide="lightbulb" class="w-6 h-6 text-yellow-400"></i>
+                    授業成功のポイント
+                </h2>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="font-bold text-blue-300 mb-1">▶ ポータルサイト化によるシームレスな移行</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed">ツール類が一つのサイトにまとまっているため、教員の事前準備が容易になるだけでなく、生徒も前回の授業でのアクセス履歴やブックマークからすぐにアプリを開くことができ、ITツールの運用によるタイムロスがなくなります。また、家庭学習での復習にも最適です。</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-blue-300 mb-1">▶ カードデザインによる概念の可視化と意欲向上</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed">「長い染色体・短い染色体」のイラストが独立の法則の理解を助け、TCG風のレイアウトが生徒の「作業への飽き」を防ぎます。これにより、質の高い「大数の法則」の証明が短時間で完了します。</p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-blue-300 mb-1">▶ 「3:1」の再発見</h3>
+                        <p class="text-sm text-slate-300 leading-relaxed">最後に「9:3:3:1」を分解して「3:1」に戻すことで、一遺伝子雑種と二遺伝子雑種の学習が完璧にリンクします。</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
