@@ -53,6 +53,25 @@
             </svg>
         );
 
+        // ▼ 新規追加：染色体のイラスト（1本）
+        const ChromosomeMono = ({ gene }) => {
+            const isDom = gene === 'A';
+            const color = isDom ? '#10b981' : '#3b82f6';
+            return (
+                <svg viewBox="0 0 80 160" className="w-[18mm] h-[36mm] drop-shadow-md z-10">
+                    {/* 染色体本体 */}
+                    <rect x="25" y="10" width="30" height="140" rx="15" fill={color} stroke="#fff" strokeWidth="2" />
+                    {/* セントロメアのくびれ */}
+                    <circle cx="40" cy="80" r="14" fill={color} stroke="#fff" strokeWidth="2" />
+                    <circle cx="40" cy="80" r="6" fill="#e2e8f0" />
+                    {/* 遺伝子座の白抜きバンド */}
+                    <rect x="26" y="35" width="28" height="26" fill="#ffffff" />
+                    {/* 遺伝子のアルファベット */}
+                    <text x="40" y="55" fontSize="24" fontWeight="900" fontFamily="'Cinzel', serif" textAnchor="middle" fill={color}>{gene}</text>
+                </svg>
+            );
+        };
+
         const CardContainer = ({ children, isBack = false }) => (
             <div className={`w-[63mm] h-[88mm] relative overflow-hidden flex flex-col justify-center items-center box-border ${isBack ? '' : 'bg-white outline outline-1 outline-slate-300'}`}>
                 {children}
@@ -72,7 +91,8 @@
             return (
                 <CardContainer>
                     <div className={`w-[57mm] h-[82mm] rounded-lg border-[2.5mm] ${borderClass} ${bgClass} relative flex flex-col items-center justify-center box-border shadow-inner`}>
-                        <div className={`absolute inset-0 flex items-center justify-center opacity-20 ${colorStr}`}>
+                        {/* 豆のイラストは薄い透かし背景として残す */}
+                        <div className={`absolute inset-0 flex items-center justify-center opacity-15 ${colorStr}`}>
                             <div className="w-28 h-28">
                                 <svg viewBox="0 0 100 100">{shape}</svg>
                             </div>
@@ -88,10 +108,9 @@
                             <span className="text-sm font-tcg font-black leading-none">{genes}</span>
                         </div>
 
+                        {/* ▼ 変更：中央に「染色体」のイラストを配置 */}
                         <div className="z-10 flex flex-col items-center mb-1 mt-2">
-                            <span className={`font-tcg text-7xl font-black ${textColor} drop-shadow-md`}>
-                                {genes}
-                            </span>
+                            <ChromosomeMono gene={genes} />
                         </div>
                         
                         <div className="z-10 mt-1">
@@ -228,9 +247,6 @@
                             <li>余白：<strong>なし（最小）</strong></li>
                             <li>オプション：<strong>「背景のグラフィックを印刷する」に必ずチェックを入れてください</strong></li>
                         </ul>
-                        <div className="mt-4 p-3 bg-slate-100 rounded text-xs text-slate-600">
-                            💡 <strong>アドバイス:</strong> ケント紙などの「厚手のA4用紙」を使用し、「長辺とじ」で両面印刷すると、本物のカードのような仕上がりになります。印刷後は枠線に沿ってハサミやカッターで切り取ってください。（裏面は多少ズレても目立たない全面ネイビー設計です）
-                        </div>
                     </div>
 
                     <div className="flex flex-col items-center print:block">
