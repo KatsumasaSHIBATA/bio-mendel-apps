@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>メンデル遺伝 デジタル教材</title>
-    <!-- Tailwind CSS -->
+    <title>メンデル遺伝 デジタル教材ポータル</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans JP', sans-serif; }
-        /* 背景の幾何学模様 */
         .bg-pattern {
             background-color: #f8fafc;
             background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
@@ -31,22 +28,19 @@
                 メンデル遺伝 デジタル教材ポータル
             </h1>
             <p class="text-slate-300 text-sm md:text-lg font-bold">
-                〜 カードと連動するリアルタイム集計システム 〜
+                〜 トランプ型カードと連動するリアルタイム集計システム 〜
             </p>
         </div>
     </header>
 
     <main class="flex-grow w-full max-w-5xl mx-auto p-6 md:p-8 space-y-10">
-        
-        <!-- 生徒・先生 共通：実験アプリ -->
         <section>
             <div class="flex items-center gap-2 mb-6 border-b-2 border-slate-200 pb-2">
                 <i data-lucide="smartphone" class="w-6 h-6 text-slate-600"></i>
-                <h2 class="text-2xl font-bold text-slate-700">LIVE集計アプリ <span class="text-sm font-normal text-slate-500 ml-2"></span></h2>
+                <h2 class="text-2xl font-bold text-slate-700">LIVE集計アプリ <span class="text-sm font-normal text-slate-500 ml-2">授業で生徒が使用します</span></h2>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- 一遺伝子雑種 -->
                 <a href="./mendel-1.netlify_app.html" class="group block bg-white rounded-2xl p-6 border-2 border-emerald-100 hover:border-emerald-500 shadow-sm hover:shadow-xl transition-all transform hover:-translate-y-1">
                     <div class="flex justify-between items-start mb-4">
                         <div class="p-3 bg-emerald-100 rounded-lg text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
@@ -58,7 +52,6 @@
                     <p class="text-sm text-slate-500 font-medium">丸(A)とシワ(a)のカードを引き合い、表現型の分離比「3:1」をクラス全員で体感します。</p>
                 </a>
 
-                <!-- 二遺伝子雑種 -->
                 <a href="./mendel-2.netlify_app.html" class="group block bg-white rounded-2xl p-6 border-2 border-blue-100 hover:border-blue-500 shadow-sm hover:shadow-xl transition-all transform hover:-translate-y-1">
                     <div class="flex justify-between items-start mb-4">
                         <div class="p-3 bg-blue-100 rounded-lg text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors">
@@ -72,37 +65,33 @@
             </div>
         </section>
 
-        <!-- 先生専用：準備・授業資料 -->
         <section>
             <div class="flex items-center gap-2 mb-6 border-b-2 border-slate-200 pb-2">
                 <i data-lucide="briefcase" class="w-6 h-6 text-slate-600"></i>
-                <h2 class="text-2xl font-bold text-slate-700">先生用 準備ツール <span class="text-sm font-normal text-slate-500 ml-2"></span></h2>
+                <h2 class="text-2xl font-bold text-slate-700">先生用 準備ツール <span class="text-sm font-normal text-slate-500 ml-2">授業準備に使用します</span></h2>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- 一遺伝子用 カードメーカー -->
                 <a href="./mendel_cards_1.html" class="group flex items-center gap-4 bg-white rounded-xl p-4 border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all">
                     <div class="p-3 bg-emerald-50 rounded-lg text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                         <i data-lucide="printer" class="w-6 h-6"></i>
                     </div>
                     <div>
                         <h3 class="text-lg font-bold text-slate-800 mb-1 group-hover:text-emerald-600 transition-colors">一遺伝子用 カードメーカー</h3>
-                        <p class="text-xs text-slate-500 font-medium">A4両面印刷用。丸・しわ(A/a)のカッコいいカードを作成します。</p>
+                        <p class="text-xs text-slate-500 font-medium">エーワンのマルチカード（10面）対応。切り取り不要の本格カードを作成します。</p>
                     </div>
                 </a>
 
-                <!-- 二遺伝子用 カードメーカー -->
                 <a href="./mendel_cards_2.html" class="group flex items-center gap-4 bg-white rounded-xl p-4 border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all">
                     <div class="p-3 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors">
                         <i data-lucide="printer" class="w-6 h-6"></i>
                     </div>
                     <div>
                         <h3 class="text-lg font-bold text-slate-800 mb-1 group-hover:text-blue-600 transition-colors">二遺伝子用 カードメーカー</h3>
-                        <p class="text-xs text-slate-500 font-medium">A4両面印刷用。2つの形質(AB等)のカッコいいカードを作成します。</p>
+                        <p class="text-xs text-slate-500 font-medium">エーワンのマルチカード（10面）対応。切り取り不要の本格カードを作成します。</p>
                     </div>
                 </a>
 
-                <!-- 一遺伝子用 実験授業案 -->
                 <a href="./lesson_plan_1.html" class="group flex items-center gap-4 bg-white rounded-xl p-4 border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all">
                     <div class="p-3 bg-emerald-50 rounded-lg text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                         <i data-lucide="book-open" class="w-6 h-6"></i>
@@ -113,7 +102,6 @@
                     </div>
                 </a>
 
-                <!-- 二遺伝子用 実験授業案 -->
                 <a href="./lesson_plan_2.html" class="group flex items-center gap-4 bg-white rounded-xl p-4 border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all">
                     <div class="p-3 bg-blue-50 rounded-lg text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-colors">
                         <i data-lucide="book-open" class="w-6 h-6"></i>
@@ -125,7 +113,6 @@
                 </a>
             </div>
         </section>
-
     </main>
 
     <footer class="bg-slate-800 text-slate-400 py-6 text-center text-sm mt-auto">
@@ -133,7 +120,6 @@
         <p class="mt-1">Developed for Active Learning in Science Classes.</p>
     </footer>
 
-    <!-- Lucide Icons の描画 -->
     <script>
         lucide.createIcons();
     </script>
