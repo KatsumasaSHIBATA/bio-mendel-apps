@@ -238,17 +238,19 @@
 
             return (
                 <div>
-                    <div className="no-print bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md flex flex-col md:flex-row justify-between items-center gap-4">
-                        <h1 className="text-xl font-bold flex items-center gap-2">
-                            <span className="text-blue-400 w-6 h-6">{SVG_DNA}</span>
-                            二遺伝子雑種 マルチカードメーカー
-                        </h1>
-                        <div className="flex gap-4">
-                            <a href="./index.html" className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg font-bold shadow transition-transform active:scale-95 text-sm flex items-center">ポータルに戻る</a>
-                            <button onClick={() => window.print()} className="bg-blue-500 hover:bg-blue-600 px-6 py-2 rounded-lg font-bold shadow flex items-center gap-2 transition-transform active:scale-95">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
-                                A4サイズで印刷
-                            </button>
+                    <div className="no-print bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md">
+                        <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                            <h1 className="text-lg md:text-xl font-bold flex items-center gap-2">
+                                <span className="text-blue-400 w-6 h-6">{SVG_DNA}</span>
+                                二遺伝子雑種 マルチカードメーカー
+                            </h1>
+                            <div className="flex gap-3 w-full md:w-auto justify-center">
+                                <a href="./index.html" className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg font-bold shadow transition-transform active:scale-95 text-sm flex items-center justify-center">ポータルに戻る</a>
+                                <button onClick={() => window.print()} className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-bold shadow flex items-center justify-center gap-2 transition-transform active:scale-95 text-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect width="12" height="8" x="6" y="14"/></svg>
+                                    A4サイズで印刷
+                                </button>
+                            </div>
                         </div>
                     </div>
 
