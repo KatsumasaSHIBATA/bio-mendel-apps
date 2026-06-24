@@ -22,16 +22,16 @@
 
     <!-- ヘッダー（印刷時は非表示） -->
     <div class="no-print bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h1 class="font-bold flex items-center gap-2">
-                <i data-lucide="book-open" class="w-5 h-5 text-blue-400"></i>
+        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-lg md:text-xl font-bold flex items-center gap-2">
+                <i data-lucide="book-open" class="w-5 h-5 md:w-6 md:h-6 text-blue-400"></i>
                 理科（生物）学習指導案
             </h1>
-            <div class="flex gap-3">
-                <a href="./index.html" class="text-sm bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded transition-colors flex items-center gap-1">
+            <div class="flex gap-3 w-full md:w-auto justify-center">
+                <a href="./index.html" class="text-sm bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg font-bold shadow transition-transform active:scale-95 flex items-center justify-center">
                     ポータルに戻る
                 </a>
-                <button onclick="window.print()" class="text-sm bg-blue-500 hover:bg-blue-600 font-bold px-3 py-1.5 rounded shadow transition-colors flex items-center gap-1">
+                <button onclick="window.print()" class="text-sm bg-blue-500 hover:bg-blue-600 font-bold px-4 py-2 rounded-lg shadow transition-transform active:scale-95 flex items-center justify-center gap-2">
                     <i data-lucide="printer" class="w-4 h-4"></i> 印刷する
                 </button>
             </div>
@@ -62,7 +62,7 @@
                 <div class="bg-blue-50 p-6 rounded-lg border border-blue-100 space-y-4">
                     <div>
                         <h3 class="font-bold text-blue-800 text-sm mb-1">知識・理解</h3>
-                        <p class="text-slate-700 leading-relaxed">2対の対立遺伝子がそれぞれ独立して配偶子に分配されること（独立の法則）を、カードを通して視覚的に理解し、16マスのパネットスクエアを用いて説明できる。</p>
+                        <p class="text-slate-700 leading-relaxed">2対の対立遺伝子がそれぞれ独立して配偶子に分配されること（独立の法則）を、カードの染色体デザインを通して視覚的に理解し、16マスのパネットスクエアを用いて説明できる。</p>
                     </div>
                     <div>
                         <h3 class="font-bold text-blue-800 text-sm mb-1">技能・思考</h3>
@@ -103,7 +103,7 @@
                                 <li><span class="font-bold">構成:</span> 配偶子カード全4種（AB, Ab, aB, ab）の♂用・♀用セット。</li>
                             </ul>
                             <div class="mt-2 text-sm bg-yellow-50 border border-yellow-200 p-3 rounded text-yellow-800">
-                                💡 <strong>工夫の意図（独立の法則の視覚化）:</strong> カードの、「2つの形質を決める遺伝子は、別々の染色体に乗っているから互いに影響せずランダムに分配される」という重要概念が直感的にわかります。
+                                💡 <strong>工夫の意図（独立の法則の視覚化）:</strong> カードイラストの中央には、A(a)の遺伝子が乗った「長い染色体」と、B(b)の遺伝子が乗った「短い染色体」が描かれています。これにより「2つの形質を決める遺伝子は、別々の染色体に乗っているから互いに影響せずランダムに分配される」という重要概念が直感的にわかります。
                             </div>
                         </div>
                     </li>
@@ -134,7 +134,7 @@
                         </h3>
                         <div class="mt-3 space-y-3 text-slate-700 pl-1">
                             <div>
-                                <strong class="text-blue-700">▶ 前回の復習と課題設定</strong>
+                                <strong class="text-blue-700">▶ 前回の復習と課題設定（プリント№18準拠）</strong>
                                 <p class="text-sm mt-1 leading-relaxed">「今回は形質を2つ（種子の形 A/a、子葉の色 B/b）同時に考える。」</p>
                             </div>
                             <div>
@@ -182,7 +182,7 @@
                         <div class="mt-3 space-y-3 text-slate-700 pl-1">
                             <div>
                                 <strong class="text-blue-700">▶ 「なぜ 9:3:3:1 になるのか」の理論解説</strong>
-                                <p class="text-sm mt-1 leading-relaxed">実験の事実をふまえ、16マス（4通り×4通り）のパネットスクエアを板書で完成させる。</p>
+                                <p class="text-sm mt-1 leading-relaxed">実験の事実をふまえ、プリントの16マス（4通り×4通り）のパネットスクエアを板書で完成させる。</p>
                             </div>
                             <div>
                                 <strong class="text-blue-700">▶ 独立の法則の真骨頂（数学的な視点）</strong>
@@ -214,7 +214,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-blue-300 mb-1">▶ カードデザインによる概念の可視化と意欲向上</h3>
-                        <p class="text-sm text-slate-300 leading-relaxed">イラストが独立の法則の理解を助け、TCG風のレイアウトが生徒の「作業への飽き」を防ぎます。これにより、質の高い「大数の法則」の証明が短時間で完了します。</p>
+                        <p class="text-sm text-slate-300 leading-relaxed">「長い染色体・短い染色体」のイラストが独立の法則の理解を助け、TCG風のレイアウトが生徒の「作業への飽き」を防ぎます。これにより、質の高い「大数の法則」の証明が短時間で完了します。</p>
                     </div>
                     <div>
                         <h3 class="font-bold text-blue-300 mb-1">▶ 「3:1」の再発見</h3>
