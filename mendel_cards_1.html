@@ -176,8 +176,9 @@
             );
         };
 
-        const A4Page = ({ children }) => (
-            <div className="w-[210mm] h-[297mm] bg-white shadow-xl flex items-center justify-center page-break-after-always mx-auto mb-10 print:shadow-none print:mx-0 print:mb-0">
+        // ▼ 変更：isLastプロパティを追加し、最後のページは改ページしないようにする。また印刷時は高さを296mmにしてはみ出しを防ぐ。
+        const A4Page = ({ children, isLast = false }) => (
+            <div className={`w-[210mm] h-[297mm] print:w-[210mm] print:h-[296mm] bg-white shadow-xl flex items-center justify-center mx-auto mb-10 print:shadow-none print:mx-0 print:mb-0 overflow-hidden ${isLast ? '' : 'page-break-after-always'}`}>
                 <div className="grid grid-cols-3 grid-rows-3 gap-0">
                     {children}
                 </div>
@@ -247,11 +248,15 @@
                             <li>余白：<strong>なし（最小）</strong></li>
                             <li>オプション：<strong>「背景のグラフィックを印刷する」に必ずチェックを入れてください</strong></li>
                         </ul>
+                        <div className="mt-4 p-3 bg-slate-100 rounded text-xs text-slate-600">
+                            💡 <strong>アドバイス:</strong> ケント紙などの「厚手のA4用紙」を使用し、「長辺とじ」で両面印刷すると、本物のカードのような仕上がりになります。印刷後は枠線に沿ってハサミやカッターで切り取ってください。（裏面は多少ズレても目立たない全面ネイビー設計です）
+                        </div>
                     </div>
 
                     <div className="flex flex-col items-center print:block">
                         <A4Page>{renderFront(monoCards)}</A4Page>
-                        <A4Page>{renderBack(monoCards)}</A4Page>
+                        {/* ▼ 変更：最後のページには isLast={true} を渡す */}
+                        <A4Page isLast={true}>{renderBack(monoCards)}</A4Page>
                     </div>
                 </div>
             );
