@@ -74,6 +74,9 @@
             
             const [filterClass, setFilterClass] = useState('all');
             const [showHelp, setShowHelp] = useState(false);
+            // ▼ 追加：詳細データの展開状態と分析表示状態を保持
+            const [expandedTeams, setExpandedTeams] = useState({});
+            const [showAnalysis, setShowAnalysis] = useState(false);
 
             // タイマー用ステート（全クラスのタイマー状態を保持）
             const [allTimers, setAllTimers] = useState({});
@@ -397,6 +400,21 @@
                 return totals.ab > 0 ? (count / totals.ab).toFixed(1) : '-';
             };
 
+            // ▼ 追加：独立の法則（形・色それぞれ）の再計算
+            const shapeStats = useMemo(() => {
+                const round = totals.AB + totals.Ab;
+                const wrinkled = totals.aB + totals.ab;
+                const ratio = wrinkled > 0 ? (round / wrinkled).toFixed(1) : '-';
+                return { round, wrinkled, ratio };
+            }, [totals]);
+
+            const colorStats = useMemo(() => {
+                const yellow = totals.AB + totals.aB;
+                const green = totals.Ab + totals.ab;
+                const ratio = green > 0 ? (yellow / green).toFixed(1) : '-';
+                return { yellow, green, ratio };
+            }, [totals]);
+
             if (error) return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold px-4 text-center">{error}</div>;
             if (!user) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">システムに接続中...</div>;
 
@@ -555,7 +573,18 @@
                                     {classGroup === '先生モード' ? (filterClass === 'simulation' ? '📊 デモ' : filterClass === 'all' ? '🏫 学年全体' : `📝 ${filterClass}`) : '🏫 学年全体'} のデータ
                                     <span className="text-slate-400 text-sm ml-2 font-normal">（目標 9：3：3：1）</span>
                                 </h2>
-                                <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-sm border border-blue-100">総試行回数: {totalTrials} 回</span>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {/* ▼ 追加：独立の法則 分析ボタン（先生のみ） */}
+                                    {classGroup === '先生モード' && (
+                                        <button 
+                                            onClick={() => setShowAnalysis(!showAnalysis)}
+                                            className={`text-sm font-bold px-3 py-1 rounded-full border transition-colors ${showAnalysis ? 'bg-indigo-500 text-white border-indigo-600 shadow-inner' : 'bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100 shadow-sm'}`}
+                                        >
+                                            {showAnalysis ? '分析を閉じる' : '✨ 独立の法則を分析'}
+                                        </button>
+                                    )}
+                                    <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-sm border border-blue-100">総試行回数: {totalTrials} 回</span>
+                                </div>
                             </div>
 
                             <div className="bg-slate-50 rounded-xl p-6 mb-6">
@@ -600,6 +629,48 @@
                                     </React.Fragment>
                                 ))}
                             </div>
+
+                            {/* ▼ 追加：独立の法則の詳細分析パネル */}
+                            {classGroup === '先生モード' && showAnalysis && (
+                                <div className="mt-8 pt-6 border-t-2 border-dashed border-slate-200 transition-all">
+                                    <h3 className="text-center font-bold text-indigo-800 mb-4 text-lg">✨ 独立の法則の証明（各形質ごとの分離比）</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* 形の遺伝 */}
+                                        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100 shadow-sm">
+                                            <h4 className="font-bold text-indigo-900 mb-3 text-center">形の遺伝（丸 : しわ ＝ 3 : 1）</h4>
+                                            <div className="flex justify-between text-sm font-bold mb-1 px-1">
+                                                <span className="text-indigo-600">丸形 ({shapeStats.round}回)</span>
+                                                <span className="text-slate-500">しわ形 ({shapeStats.wrinkled}回)</span>
+                                            </div>
+                                            <div className="h-6 w-full bg-slate-200 rounded-full overflow-hidden flex shadow-inner">
+                                                <div className="h-full bg-indigo-400 transition-all duration-700" style={{ width: `${(shapeStats.round / (shapeStats.round + shapeStats.wrinkled || 1)) * 100}%` }}></div>
+                                                <div className="h-full bg-slate-400 transition-all duration-700" style={{ width: `${(shapeStats.wrinkled / (shapeStats.round + shapeStats.wrinkled || 1)) * 100}%` }}></div>
+                                            </div>
+                                            <div className="text-center mt-3 font-black text-2xl text-indigo-700">
+                                                {shapeStats.ratio} <span className="text-base text-indigo-400">: 1.0</span>
+                                            </div>
+                                        </div>
+                                        {/* 色の遺伝 */}
+                                        <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100 shadow-sm">
+                                            <h4 className="font-bold text-emerald-900 mb-3 text-center">色の遺伝（黄 : 緑 ＝ 3 : 1）</h4>
+                                            <div className="flex justify-between text-sm font-bold mb-1 px-1">
+                                                <span className="text-amber-600">黄色 ({colorStats.yellow}回)</span>
+                                                <span className="text-emerald-600">緑色 ({colorStats.green}回)</span>
+                                            </div>
+                                            <div className="h-6 w-full bg-slate-200 rounded-full overflow-hidden flex shadow-inner">
+                                                <div className="h-full bg-amber-400 transition-all duration-700" style={{ width: `${(colorStats.yellow / (colorStats.yellow + colorStats.green || 1)) * 100}%` }}></div>
+                                                <div className="h-full bg-emerald-500 transition-all duration-700" style={{ width: `${(colorStats.green / (colorStats.yellow + colorStats.green || 1)) * 100}%` }}></div>
+                                            </div>
+                                            <div className="text-center mt-3 font-black text-2xl text-emerald-700">
+                                                {colorStats.ratio} <span className="text-base text-emerald-400">: 1.0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p className="text-center text-sm text-slate-500 mt-4 font-bold">
+                                        ※「9:3:3:1」のデータを形・色それぞれ別々に見直すと、どちらも「3:1」の分離比になっていることがわかります。
+                                    </p>
+                                </div>
+                            )}
                         </section>
 
                         {/* ▼ 変更：先生モードで対象がシミュレーション以外の時は入力パネルを非表示にする */}
@@ -675,6 +746,29 @@
                                                     計 {d.total} 回
                                                 </div>
                                             </div>
+
+                                            {/* ▼ 追加：先生モードのみ詳細展開ボタン */}
+                                            {classGroup === '先生モード' && (
+                                                <div className="mt-2 pt-2 border-t border-slate-100">
+                                                    <button 
+                                                        onClick={() => setExpandedTeams(prev => ({ ...prev, [d.id]: !prev[d.id] }))} 
+                                                        className="text-[11px] font-bold text-slate-400 hover:text-slate-600 flex items-center justify-center w-full transition-colors py-1"
+                                                    >
+                                                        {expandedTeams[d.id] ? '▲ 閉じる' : '▼ 詳細データ'}
+                                                    </button>
+                                                    {expandedTeams[d.id] && (
+                                                        <div className="mt-2 text-xs bg-slate-50 p-2 rounded border border-slate-100">
+                                                            <div className="grid grid-cols-2 gap-1 mb-1 text-slate-600">
+                                                                <span>[AB]: {d.AB||0}</span><span>[Ab]: {d.Ab||0}</span>
+                                                                <span>[aB]: {d.aB||0}</span><span>[ab]: {d.ab||0}</span>
+                                                            </div>
+                                                            <div className="font-bold text-center mt-1.5 text-blue-600 bg-blue-50 py-0.5 rounded">
+                                                                比 {(d.ab||0)>0 ? ((d.AB||0)/d.ab).toFixed(1) : '-'}:{(d.ab||0)>0 ? ((d.Ab||0)/d.ab).toFixed(1) : '-'}:{(d.ab||0)>0 ? ((d.aB||0)/d.ab).toFixed(1) : '-'}:1.0
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     ))
                                 )}
@@ -698,13 +792,12 @@
                                                 <li><b className="text-blue-600">全データリセット</b><br/>現在表示している対象クラスの全データを一括で 0 に戻します。対象が「デモ」の場合は先生の入力のみリセットします。</li>
                                                 <li><b className="text-blue-600">強制ログアウト（キック）</b><br/>各班の「✕」ボタンを押すとその班のデータを消去し、対象生徒を初期画面に強制的に戻します。（登録間違いやイタズラ対応用）</li>
                                                 <li><b className="text-blue-600">デモ用 直接入力</b><br/><b>対象を「デモ」に切り替えた時のみ</b>、先生用の入力パネルが表示され、数値を直接打ち込めます。また、ブラウザをリロードすると先生のデータは消去され、初期画面に戻ります。（過去の先生データも再ログイン時に自動で一掃されます）</li>
-                                                <li><b className="text-blue-600">ポータルとカードメーカー</b><br/><a href="./index.html" className="text-blue-500 underline hover:text-blue-700" target="_blank" rel="noopener noreferrer">デジタル教材ポータル</a>から、授業用の「TCG風カードメーカー」にアクセスし、A4用紙で生徒用のトランプ型カードを印刷できます。</li>
                                             </ul>
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-blue-200 pb-2">📖 実験のルール</h2>
+                                        <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-blue-200 pb-2">実験のルール</h2>
                                         <div className="space-y-4 text-sm text-slate-700">
                                             <h3 className="font-bold text-blue-600 text-base">独立の法則 9 : 3 : 3 : 1 を確かめよう!</h3>
                                             <ol className="list-decimal pl-5 space-y-3">
