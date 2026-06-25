@@ -63,11 +63,11 @@
         const CLASS_LIST = ['A組', 'B組', 'C組', 'D組', 'E組', 'F組', 'G組', 'H組', '先生モード'];
 
         function App() {
-            // ... 既存のステート群 ...
-            const [showHelp, setShowHelp] = useState(false);
-            const [expandedTeamId, setExpandedTeamId] = useState(null); // ▼ 新規追加: 詳細パネル開閉用ステート
-
-            // ... (Firebase初期化やデータ取得処理などの既存コード) ...
+            const [user, setUser] = useState(null);
+            const [classGroup, setClassGroup] = useState('A組');
+            const [name, setName] = useState(''); 
+            const [passwordInput, setPasswordInput] = useState('');
+            const [isNameSet, setIsNameSet] = useState(false);
             const [myCounts, setMyCounts] = useState({ AB: 0, Ab: 0, aB: 0, ab: 0 });
             const [allData, setAllData] = useState([]);
             const [error, setError] = useState(null);
@@ -654,79 +654,33 @@
                                     <span className="flex items-center gap-1"><span className="bg-yellow-400 text-white px-1.5 py-0.5 rounded text-[10px]">TOP</span> トップ</span>
                                 </div>
                             </div>
-                            
-                            {/* ▼ 変更: ランキングリストを詳細表示対応に上書き */}
-                            <ul className="space-y-2 max-h-[400px] md:max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                                {sortedData.map((team, index) => {
-                                    const teamTotal = team.AB + team.Ab + team.aB + team.ab;
-                                    const isExpanded = expandedTeamId === team.id;
-                                    return (
-                                        <li key={team.id} className="bg-white p-3 rounded-lg shadow-sm border border-slate-100 flex flex-col">
-                                            <div className="flex justify-between items-center">
-                                                <div className="flex items-center gap-2 md:gap-3">
-                                                    <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center font-bold text-xs md:text-sm ${
-                                                        index === 0 ? 'bg-yellow-100 text-yellow-600 border border-yellow-200' :
-                                                        index === 1 ? 'bg-slate-100 text-slate-500 border border-slate-200' :
-                                                        index === 2 ? 'bg-amber-100 text-amber-700 border border-amber-200' :
-                                                        'bg-slate-50 text-slate-400'
-                                                    }`}>
-                                                        {index + 1}
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold text-slate-800 text-sm md:text-base">{team.name}</span>
-                                                        {classGroup === '先生モード' && filterClass === 'all' && team.className && (
-                                                            <span className="text-[10px] md:text-xs text-slate-500">{team.className}</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2 md:gap-3">
-                                                    <span className="font-bold text-slate-700 text-sm md:text-base">{teamTotal} 回</span>
-                                                    {classGroup === '先生モード' && (
-                                                        <>
-                                                            <button 
-                                                                onClick={() => setExpandedTeamId(isExpanded ? null : team.id)}
-                                                                className="text-[10px] md:text-xs bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 px-2 py-1 rounded transition-colors font-bold whitespace-nowrap"
-                                                            >
-                                                                {isExpanded ? '▲ 閉じる' : '▼ 詳細'}
-                                                            </button>
-                                                            <button onClick={() => handleDelete(team.id)} className="w-6 h-6 bg-red-100 text-red-600 rounded-full hover:bg-red-200 flex items-center justify-center font-bold text-xs transition-colors shrink-0">✕</button>
-                                                        </>
-                                                    )}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {processedData.length === 0 ? (
+                                    <div className="col-span-full text-center text-slate-400 text-sm py-4">データがありません</div>
+                                ) : (
+                                    processedData.map(d => (
+                                        <div key={d.id} className={`relative p-3 rounded-lg text-sm border shadow-sm transition-all ${d.id === user?.uid ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-300 scale-105 z-10' : 'bg-white border-slate-200'}`}>
+                                            {classGroup === '先生モード' && d.classGroup !== '先生モード' && (
+                                                <button 
+                                                    onClick={() => handleKick(d.id, d.classGroup, d.name)}
+                                                    className="absolute -top-2 -left-2 bg-red-100 text-red-600 hover:bg-red-500 hover:text-white rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-md transition-colors z-20"
+                                                    title="この班のデータを消去して強制ログアウト"
+                                                >✕</button>
+                                            )}
+                                            {d.isTopCount && <div className="absolute -top-2 -right-2 flex gap-1"><span className="bg-yellow-400 text-white px-1.5 py-0.5 rounded text-[10px] font-bold shadow border border-yellow-500" title="最多試行回数！">TOP</span></div>}
+                                            <div className="text-xs font-bold text-blue-500 mb-0.5">{d.classGroup}</div>
+                                            <div className="font-bold text-slate-800 truncate mb-1 text-base">{d.name}</div>
+                                            <div className="flex justify-between items-end">
+                                                <div className={`text-xs font-bold px-2 py-1 rounded inline-block ${d.isTopCount ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-500'}`}>
+                                                    計 {d.total} 回
                                                 </div>
                                             </div>
-
-                                            {/* ▼ 先生モード専用 詳細パネル */}
-                                            {classGroup === '先生モード' && isExpanded && (
-                                                <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 animate-fade-in shadow-inner">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <h4 className="font-bold text-blue-700 border-b border-blue-200 pb-1 mb-2">データ内訳（計 {teamTotal}回）</h4>
-                                                            <ul className="space-y-1 font-medium">
-                                                                <li className="flex justify-between"><span>[AB] 丸・黄:</span> <span>{team.AB} 回</span></li>
-                                                                <li className="flex justify-between"><span>[Ab] 丸・緑:</span> <span>{team.Ab} 回</span></li>
-                                                                <li className="flex justify-between"><span>[aB] しわ・黄:</span> <span>{team.aB} 回</span></li>
-                                                                <li className="flex justify-between"><span>[ab] しわ・緑:</span> <span>{team.ab} 回</span></li>
-                                                            </ul>
-                                                        </div>
-                                                        <div>
-                                                            <h4 className="font-bold text-blue-700 border-b border-blue-200 pb-1 mb-2">比率（合計16換算）</h4>
-                                                            <div className="font-medium">
-                                                                <span className="text-slate-500 block mb-1">表現型 [AB] : [Ab] : [aB] : [ab]</span>
-                                                                <div className="text-sm font-black text-slate-800 bg-white p-2 rounded border border-slate-200 text-center tracking-widest">
-                                                                    {teamTotal > 0 ? (team.AB / teamTotal * 16).toFixed(1) : '0.0'} : {teamTotal > 0 ? (team.Ab / teamTotal * 16).toFixed(1) : '0.0'} : {teamTotal > 0 ? (team.aB / teamTotal * 16).toFixed(1) : '0.0'} : {teamTotal > 0 ? (team.ab / teamTotal * 16).toFixed(1) : '0.0'}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </li>
-                                    );
-                                })}
-                            </ul>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </section>
-                    </div>
-                </main>
+                    </main>
 
                     {showHelp && (
                         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
