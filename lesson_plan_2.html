@@ -3,232 +3,744 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>学習指導案：二遺伝子雑種とLIVE集計</title>
+    <title>二遺伝子雑種 LIVE集計</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
-        body { font-family: 'Noto Sans JP', sans-serif; }
-        @media print {
-            body { background: white; }
-            .no-print { display: none !important; }
-            .print-shadow-none { box-shadow: none !important; border: none !important; }
-        }
-    </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800 pb-20 print:pb-0">
+<body class="bg-slate-50">
+    <div id="root"></div>
 
-    <!-- ヘッダー（印刷時は非表示） -->
-    <div class="no-print bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md">
-        <div class="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-lg md:text-xl font-bold flex items-center gap-2">
-                <i data-lucide="book-open" class="w-5 h-5 md:w-6 md:h-6 text-blue-400"></i>
-                理科（生物）学習指導案
-            </h1>
-            <div class="flex gap-3 w-full md:w-auto justify-center">
-                <a href="./index.html" class="text-sm bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg font-bold shadow transition-transform active:scale-95 flex items-center justify-center">
-                    ポータルに戻る
-                </a>
-                <button onclick="window.print()" class="text-sm bg-blue-500 hover:bg-blue-600 font-bold px-4 py-2 rounded-lg shadow transition-transform active:scale-95 flex items-center justify-center gap-2">
-                    <i data-lucide="printer" class="w-4 h-4"></i> 印刷する
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Babel設定：自動ランタイムによるエラーを回避するためclassicモードを登録 -->
+    <script>
+        Babel.registerPreset('react-classic', {
+            presets: [
+                [Babel.availablePresets['react'], { "runtime": "classic" }]
+            ]
+        });
+    </script>
 
-    <!-- 指導案 本文 -->
-    <!-- ▼ 変更：一遺伝子と揃えるため、不要な上部の青い太線（border-t-8 border-blue-500）を削除しました -->
-    <main class="max-w-4xl mx-auto mt-8 bg-white p-10 md:p-16 rounded-xl shadow-lg print-shadow-none">
+    <!-- アプリケーションコード -->
+    <script type="text/babel" data-type="module" data-presets="react-classic">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         
-        <header class="text-center mb-12 border-b-4 border-blue-500 pb-8">
-            <h1 class="text-3xl font-black text-slate-800 mb-6 tracking-tight">理科（生物）学習指導案<br><span class="text-2xl text-blue-600 mt-2 block">メンデル遺伝（二遺伝子雑種）とカード実験</span></h1>
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        // 管理者パスワード設定
+        const ADMIN_PASSWORD = "9331";
+
+        const isCanvasEnv = typeof __firebase_config !== 'undefined' && typeof __app_id !== 'undefined';
+        const myFirebaseConfig = {
+            apiKey: "AIzaSyCar5BfWLpkeMZY3CvQXWPafMcy7-3j0Ao",
+            authDomain: "mendelapp-e8546.firebaseapp.com",
+            projectId: "mendelapp-e8546",
+            storageBucket: "mendelapp-e8546.firebasestorage.app",
+            messagingSenderId: "440177963313",
+            appId: "1:440177963313:web:4a022fa480f2217aeb0010"
+        };
+        const firebaseConfig = isCanvasEnv ? JSON.parse(__firebase_config) : myFirebaseConfig;
+        const currentAppId = isCanvasEnv ? __app_id : "matsumoto-mendel-2"; 
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const PHENOTYPES = [
+            { id: 'AB', label: '[AB]', name: '丸・黄', target: 9, btnColor: 'bg-amber-100 hover:bg-amber-200 text-amber-900 border-amber-300', barColor: 'bg-amber-400' },
+            { id: 'Ab', label: '[Ab]', name: '丸・緑', target: 3, btnColor: 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border-emerald-300', barColor: 'bg-emerald-500' },
+            { id: 'aB', label: '[aB]', name: 'しわ・黄', target: 3, btnColor: 'bg-orange-100 hover:bg-orange-200 text-orange-900 border-orange-300', barColor: 'bg-orange-400' },
+            { id: 'ab', label: '[ab]', name: 'しわ・緑', target: 1, btnColor: 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300', barColor: 'bg-slate-400' },
+        ];
+
+        const CLASS_LIST = ['A組', 'B組', 'C組', 'D組', 'E組', 'F組', 'G組', 'H組', '先生モード'];
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [classGroup, setClassGroup] = useState('A組');
+            const [name, setName] = useState(''); 
+            const [passwordInput, setPasswordInput] = useState('');
+            const [isNameSet, setIsNameSet] = useState(false);
+            const [myCounts, setMyCounts] = useState({ AB: 0, Ab: 0, aB: 0, ab: 0 });
+            const [allData, setAllData] = useState([]);
+            const [error, setError] = useState(null);
             
-            <div class="flex flex-wrap justify-center gap-4 text-sm font-bold text-slate-600">
-                <span class="bg-slate-100 px-4 py-2 rounded-full border border-slate-200">対象学年: 中学2年 理科（中高一貫）</span>
-                <span class="bg-slate-100 px-4 py-2 rounded-full border border-slate-200">単元: 第7章 第1節 遺伝のきまり・2遺伝子雑種</span>
-                <span class="bg-slate-100 px-4 py-2 rounded-full border border-slate-200">所要時間: 50分（1コマ）</span>
-            </div>
-        </header>
+            const [filterClass, setFilterClass] = useState('all');
+            const [showHelp, setShowHelp] = useState(false);
 
-        <div class="space-y-12">
+            // タイマー用ステート（全クラスのタイマー状態を保持）
+            const [allTimers, setAllTimers] = useState({});
+            const [timeLeft, setTimeLeft] = useState(null);
+            const [timerMinutes, setTimerMinutes] = useState(5); // 初期値5分
+
+            const isNameSetRef = useRef(isNameSet);
+            useEffect(() => { isNameSetRef.current = isNameSet; }, [isNameSet]);
             
-            <!-- 1. 本時の目標 -->
-            <section>
-                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-4">
-                    <span class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center">1</span>
-                    本時の目標
-                </h2>
-                <div class="bg-blue-50 p-6 rounded-lg border border-blue-100 space-y-4">
-                    <div>
-                        <h3 class="font-bold text-blue-800 text-sm mb-1">知識・理解</h3>
-                        <p class="text-slate-700 leading-relaxed">2対の対立遺伝子がそれぞれ独立して配偶子に分配されること（独立の法則）を、カードの染色体デザインを通して視覚的に理解し、16マスのパネットスクエアを用いて説明できる。</p>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-blue-800 text-sm mb-1">技能・思考</h3>
-                        <p class="text-slate-700 leading-relaxed">ゲーム性のある模擬実験とLIVE集計を通して、2つの形質の遺伝が全体として「9：3：3：1」に収束していく現象を見いだすことができる。</p>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-blue-800 text-sm mb-1">態度</h3>
-                        <p class="text-slate-700 leading-relaxed">複雑に見える生命現象の背後に、単純な数学的規則性（3:1の掛け合わせ）が隠れていることの美しさに気づき、生命科学への探究心を深める。</p>
-                    </div>
-                </div>
-            </section>
+            const classGroupRef = useRef(classGroup);
+            useEffect(() => { classGroupRef.current = classGroup; }, [classGroup]);
 
-            <!-- 2. 準備物 -->
-            <section>
-                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-4">
-                    <span class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center">2</span>
-                    準備物（教具）
-                </h2>
-                <ul class="space-y-4 text-slate-700 pl-2">
-                    <li class="flex items-start gap-3">
-                        <i data-lucide="check-circle-2" class="w-6 h-6 text-blue-500 shrink-0 mt-0.5"></i>
-                        <div>
-                            <strong>生徒用学習端末（タブレット・Chromebook等）および ロイロノート</strong>
-                        </div>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i data-lucide="check-circle-2" class="w-6 h-6 text-blue-500 shrink-0 mt-0.5"></i>
-                        <div>
-                            <strong>メンデル遺伝 実験ポータルサイト</strong>
-                        </div>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i data-lucide="check-circle-2" class="w-6 h-6 text-blue-500 shrink-0 mt-0.5"></i>
-                        <div>
-                            <strong>TCG風カードセット 二遺伝子雑種Ver.（各班1セット）</strong>
-                            <ul class="list-disc pl-5 mt-2 space-y-1 text-sm text-slate-600">
-                                <li><span class="font-bold">作成方法:</span> 事前に教員がポータルサイトの「二遺伝子雑種 TCG風カードメーカー」からA4厚紙等に印刷・裁断しておく。</li>
-                                <li><span class="font-bold">構成:</span> 配偶子カード全4種（AB, Ab, aB, ab）の♂用・♀用セット。</li>
-                            </ul>
-                            <div class="mt-2 text-sm bg-yellow-50 border border-yellow-200 p-3 rounded text-yellow-800">
-                                💡 <strong>工夫の意図（独立の法則の視覚化）:</strong> カードイラストの中央には、A(a)の遺伝子が乗った「長い染色体」と、B(b)の遺伝子が乗った「短い染色体」が描かれています。これにより「2つの形質を決める遺伝子は、別々の染色体に乗っているから互いに影響せずランダムに分配される」という重要概念が直感的にわかります。
-                            </div>
-                        </div>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <i data-lucide="check-circle-2" class="w-6 h-6 text-blue-500 shrink-0 mt-0.5"></i>
-                        <div>
-                            <strong>プロジェクター</strong>（教員がアプリの「クラス全体」集計画面を投影）
-                        </div>
-                    </li>
-                </ul>
-            </section>
+            useEffect(() => {
+                const initAuth = async () => {
+                    try {
+                        if (isCanvasEnv && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (e) {
+                        setError(`認証エラー: ${e.message}`);
+                    }
+                };
+                initAuth();
+                const unsubscribe = onAuthStateChanged(auth, setUser);
+                return () => unsubscribe();
+            }, []);
 
-            <!-- 3. 本時の展開 -->
-            <section>
-                <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
-                    <span class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center">3</span>
-                    本時の展開（50分）
-                </h2>
+            useEffect(() => {
+                if (!user) return;
+
+                const dataRef = collection(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data');
+                const unsubscribeData = onSnapshot(query(dataRef), (snapshot) => {
+                    const data = [];
+                    snapshot.forEach((doc) => data.push({ id: doc.id, ...doc.data() }));
+                    setAllData(data);
+
+                    if (!isNameSetRef.current) {
+                        const myDoc = data.find(d => d.id === user.uid);
+                        if (myDoc && myDoc.name) {
+                            if (myDoc.classGroup === '先生モード') {
+                                // ▼ 変更：先生モードの時は、リロード時にデータを消去して初期画面に戻る
+                                deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data', user.uid)).catch(console.error);
+                            } else {
+                                setClassGroup(myDoc.classGroup || 'A組');
+                                setName(myDoc.name);
+                                setMyCounts({ AB: myDoc.AB || 0, Ab: myDoc.Ab || 0, aB: myDoc.aB || 0, ab: myDoc.ab || 0 });
+                                setIsNameSet(true);
+                            }
+                        }
+                    } else {
+                        const myDoc = data.find(d => d.id === user.uid);
+                        if (!myDoc && classGroupRef.current !== '先生モード') {
+                            alert("管理者によってデータが消去されました。\n最初から正しいクラスと班名で入り直してください。");
+                            setIsNameSet(false);
+                            setName('');
+                            setMyCounts({ AB: 0, Ab: 0, aB: 0, ab: 0 });
+                        }
+                    }
+                });
+
+                // --- 変更：クラスごとのタイマー管理ドキュメントを監視 ---
+                const timerRef = doc(db, 'artifacts', currentAppId, 'public', 'data', 'timer_state', 'classes');
+                const unsubscribeTimer = onSnapshot(timerRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        setAllTimers(docSnap.data());
+                    } else {
+                        setAllTimers({});
+                    }
+                });
+
+                return () => { unsubscribeData(); unsubscribeTimer(); };
+            }, [user]);
+
+            // 現在注目すべきタイマークラスを決定（先生は対象クラス、生徒は自分のクラス）
+            const activeTimerClass = classGroup === '先生モード' ? filterClass : classGroup;
+            const currentTimerState = allTimers[activeTimerClass] || { isRunning: false, endTime: null };
+
+            useEffect(() => {
+                if (currentTimerState.isRunning && currentTimerState.endTime) {
+                    const interval = setInterval(() => {
+                        const diff = currentTimerState.endTime - Date.now();
+                        if (diff <= 0) {
+                            setTimeLeft(0);
+                            clearInterval(interval);
+                        } else {
+                            setTimeLeft(diff);
+                        }
+                    }, 100);
+                    return () => clearInterval(interval);
+                } else {
+                    setTimeLeft(null);
+                }
+            }, [currentTimerState.isRunning, currentTimerState.endTime]);
+
+            const updateDB = async (newCounts, currentClassGroup, currentName) => {
+                if (!user) return;
+                try {
+                    await setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data', user.uid), {
+                        classGroup: currentClassGroup, name: currentName, ...newCounts, updatedAt: new Date().toISOString()
+                    }, { merge: true });
+                } catch (e) {
+                    alert("データ保存に失敗しました。");
+                }
+            };
+
+            // 生徒の入力可否判定（先生は常に可能、生徒はタイマー稼働中のみ可能）
+            const isInputDisabled = classGroup !== '先生モード' && (!currentTimerState.isRunning || timeLeft === 0 || timeLeft === null);
+
+            const handleIncrement = (type) => {
+                if (isInputDisabled) return; // ロック時は無効化
+                const newCounts = { ...myCounts, [type]: myCounts[type] + 1 };
+                setMyCounts(newCounts);
+                updateDB(newCounts, classGroup, name);
+            };
+
+            const handleDecrement = (type) => {
+                if (isInputDisabled) return; // ロック時は無効化
+                if (myCounts[type] > 0) {
+                    const newCounts = { ...myCounts, [type]: myCounts[type] - 1 };
+                    setMyCounts(newCounts);
+                    updateDB(newCounts, classGroup, name);
+                }
+            };
+
+            const handleDirectInput = (type, value) => {
+                const num = value === '' ? 0 : parseInt(value, 10);
+                if (!isNaN(num) && num >= 0) {
+                    const newCounts = { ...myCounts, [type]: num };
+                    setMyCounts(newCounts);
+                    updateDB(newCounts, classGroup, name);
+                }
+            };
+
+            // ▼ 変更：asyncを追加し、ログイン時に過去の先生データを一掃する処理を追加
+            const handleJoin = async (e) => {
+                e.preventDefault();
+                if (classGroup === '先生モード') {
+                    if (passwordInput === ADMIN_PASSWORD) {
+                        // 過去の「先生モード」のゴミデータを一掃する
+                        const oldTeacherDocs = allData.filter(d => d.classGroup === '先生モード');
+                        for (const oldDoc of oldTeacherDocs) {
+                            await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data', oldDoc.id)).catch(console.error);
+                        }
+
+                        setIsNameSet(true);
+                        setName('先生');
+                        const resetCounts = { AB: 0, Ab: 0, aB: 0, ab: 0 };
+                        setMyCounts(resetCounts);
+                        updateDB(resetCounts, '先生モード', '先生');
+                        setFilterClass('all');
+                    } else {
+                        alert("パスワードが違います。");
+                    }
+                } else if (name.trim()) {
+                    setIsNameSet(true);
+                    updateDB(myCounts, classGroup, name.trim());
+                    setFilterClass(classGroup);
+                }
+            };
+
+            const handleReset = async () => {
+                if (filterClass === 'simulation') {
+                    if (!confirm(`シミュレーション（先生）のデータをすべて 0 に戻しますか？`)) return;
+                    setMyCounts({ AB: 0, Ab: 0, aB: 0, ab: 0 });
+                    updateDB({ AB: 0, Ab: 0, aB: 0, ab: 0 }, '先生モード', '先生');
+                    alert(`シミュレーションデータをリセットしました。`);
+                    return;
+                }
+
+                const targetName = filterClass === 'all' ? '学年全体（生徒）' : filterClass;
+                if (!confirm(`本当に「${targetName}」のデータをすべて削除して 0 に戻しますか？`)) return;
+                try {
+                    const targets = filterClass === 'all' ? allData.filter(d => d.classGroup !== '先生モード') : allData.filter(d => d.classGroup === filterClass);
+                    for (const d of targets) await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data', d.id));
+                    alert(`${targetName} のデータをリセットしました。`);
+                } catch (e) {
+                    alert("データの削除に失敗しました。");
+                }
+            };
+
+            const handleKick = async (id, className, groupName) => {
+                if (!confirm(`本当に ${className}「${groupName}」のデータを消去し、ログアウトさせますか？\n（いたずらや登録間違いの修正用）`)) return;
+                try {
+                    await deleteDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'mendel_dihybrid_data', id));
+                } catch (e) {
+                    alert("データの削除に失敗しました。");
+                }
+            };
+
+            const startTimer = async (minutes) => {
+                if (filterClass === 'all' || filterClass === 'simulation') {
+                    alert("タイマーを開始する対象クラスを選択してください。");
+                    return;
+                }
+                const mins = parseInt(minutes, 10);
+                if (isNaN(mins) || mins <= 0) return;
+                const endTime = Date.now() + mins * 60 * 1000;
+                await setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'timer_state', 'classes'), {
+                    [filterClass]: { endTime, isRunning: true }
+                }, { merge: true });
+            };
+
+            const stopTimer = async () => {
+                if (filterClass === 'all' || filterClass === 'simulation') {
+                    alert("タイマーを停止する対象クラスを選択してください。");
+                    return;
+                }
+                await setDoc(doc(db, 'artifacts', currentAppId, 'public', 'data', 'timer_state', 'classes'), {
+                    [filterClass]: { endTime: null, isRunning: false }
+                }, { merge: true });
+            };
+
+            const handleExportCSV = () => {
+                let targetData = [];
+                if (filterClass === 'simulation') {
+                    targetData = allData.filter(d => d.classGroup === '先生モード');
+                } else if (filterClass === 'all') {
+                    targetData = allData.filter(d => d.classGroup !== '先生モード');
+                } else {
+                    targetData = allData.filter(d => d.classGroup === filterClass);
+                }
+
+                if (targetData.length === 0) {
+                    alert("出力するデータがありません。");
+                    return;
+                }
                 
-                <div class="relative border-l-4 border-slate-200 ml-4 space-y-8 pb-4">
+                const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+                let csvContent = "クラス,班名,[AB],[Ab],[aB],[ab],合計\n";
+                
+                targetData.forEach(d => {
+                    const AB = d.AB || 0;
+                    const Ab = d.Ab || 0;
+                    const aB = d.aB || 0;
+                    const ab = d.ab || 0;
+                    const total = AB + Ab + aB + ab;
+                    const escape = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
+                    csvContent += `${escape(d.classGroup)},${escape(d.name)},${AB},${Ab},${aB},${ab},${total}\n`;
+                });
+                
+                const blob = new Blob([bom, csvContent], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                
+                const now = new Date();
+                const yyyy = now.getFullYear();
+                const mm = String(now.getMonth() + 1).padStart(2, '0');
+                const dd = String(now.getDate()).padStart(2, '0');
+                const hh = String(now.getHours()).padStart(2, '0');
+                const min = String(now.getMinutes()).padStart(2, '0');
+                link.download = `二遺伝子雑種_${filterClass}_${yyyy}${mm}${dd}_${hh}${min}.csv`;
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            };
+
+            const formatTime = (ms) => {
+                if (ms === null) return '';
+                const totalSeconds = Math.ceil(ms / 1000);
+                const m = Math.floor(totalSeconds / 60);
+                const s = totalSeconds % 60;
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            };
+
+            const processedData = useMemo(() => {
+                let targetData = [];
+                if (classGroup === '先生モード') {
+                    if (filterClass === 'simulation') {
+                        targetData = allData.filter(d => d.classGroup === '先生モード');
+                    } else if (filterClass === 'all') {
+                        targetData = allData.filter(d => d.classGroup !== '先生モード');
+                    } else {
+                        targetData = allData.filter(d => d.classGroup === filterClass);
+                    }
+                } else {
+                    targetData = allData.filter(d => d.classGroup === classGroup);
+                }
                     
-                    <!-- 導入 -->
-                    <div class="relative pl-6">
-                        <div class="absolute w-4 h-4 bg-blue-500 rounded-full -left-[10px] top-1.5 border-4 border-white"></div>
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-3">
-                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm font-black border border-blue-200">10分</span>
-                            【導入】知識の拡張と「問い」の提示
-                        </h3>
-                        <div class="mt-3 space-y-3 text-slate-700 pl-1">
-                            <div>
-                                <strong class="text-blue-700">▶ 前回の復習と課題設定（プリント№18準拠）</strong>
-                                <p class="text-sm mt-1 leading-relaxed">「今回は形質を2つ（種子の形 A/a、子葉の色 B/b）同時に考える。」</p>
+                let maxTotal = 0;
+                const dataWithStats = targetData.map(d => {
+                    const total = (d.AB || 0) + (d.Ab || 0) + (d.aB || 0) + (d.ab || 0);
+                    if (total > maxTotal) maxTotal = total;
+                    return { ...d, total };
+                });
+                return dataWithStats.map(d => ({
+                    ...d, isTopCount: d.total > 0 && d.total === maxTotal
+                })).sort((a, b) => b.total - a.total); 
+            }, [allData, filterClass, classGroup]);
+
+            const totals = useMemo(() => {
+                let targetData = [];
+                if (classGroup === '先生モード') {
+                    if (filterClass === 'simulation') {
+                        targetData = allData.filter(d => d.classGroup === '先生モード');
+                    } else if (filterClass === 'all') {
+                        targetData = allData.filter(d => d.classGroup !== '先生モード');
+                    } else {
+                        targetData = allData.filter(d => d.classGroup === filterClass);
+                    }
+                } else {
+                    targetData = allData.filter(d => d.classGroup !== '先生モード');
+                }
+
+                return targetData.reduce((acc, curr) => ({
+                    AB: acc.AB + (curr.AB || 0),
+                    Ab: acc.Ab + (curr.Ab || 0),
+                    aB: acc.aB + (curr.aB || 0),
+                    ab: acc.ab + (curr.ab || 0)
+                }), { AB: 0, Ab: 0, aB: 0, ab: 0 });
+            }, [allData, filterClass, classGroup]);
+
+            const totalTrials = totals.AB + totals.Ab + totals.aB + totals.ab;
+            const maxCount = Math.max(totals.AB, totals.Ab, totals.aB, totals.ab, 1);
+
+            const getRatio = (count) => {
+                return totals.ab > 0 ? (count / totals.ab).toFixed(1) : '-';
+            };
+
+            if (error) return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold px-4 text-center">{error}</div>;
+            if (!user) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold">システムに接続中...</div>;
+
+            if (!isNameSet) {
+                return (
+                    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+                        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border-t-8 border-blue-600 relative">
+                            <button onClick={() => setShowHelp(true)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center transition-colors font-serif italic" title="アプリの概要">i</button>
+                            <h1 className="text-2xl font-bold text-center text-slate-800 mb-2">二遺伝子雑種 LIVE集計</h1>
+                            <p className="text-center text-slate-500 mb-6 text-sm">自分のクラスと班名を入力してください</p>
+                            <form onSubmit={handleJoin} className="space-y-5">
+                                <div>
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">クラス</label>
+                                    <select value={classGroup} onChange={(e) => setClassGroup(e.target.value)} className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 outline-none font-bold text-slate-700 bg-white">
+                                        {CLASS_LIST.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                </div>
+                                {classGroup !== '先生モード' ? (
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1">班の名前</label>
+                                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="例：1班、松本ペア" className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-blue-500 outline-none font-bold text-slate-700" required />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1">管理者パスワード</label>
+                                        <input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="パスワードを入力" className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-red-500 outline-none font-bold text-slate-700" required />
+                                    </div>
+                                )}
+                                <button type="submit" className={`w-full ${classGroup === '先生モード' ? 'bg-slate-700 hover:bg-slate-800' : 'bg-blue-600 hover:bg-blue-700'} text-white font-bold py-3 rounded-lg transition-colors mt-4`}>
+                                    {classGroup === '先生モード' ? '管理者として入室' : '実験スタート'}
+                                </button>
+                            </form>
+                        </div>
+                        {showHelp && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                                <div className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
+                                    <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center">✕</button>
+                                    <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-blue-200 pb-2 flex items-center gap-2">
+                                        <span className="font-serif italic text-blue-600">i</span> アプリの概要
+                                    </h2>
+                                    <div className="space-y-6 text-sm text-slate-700">
+                                        <div>
+                                            <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">この実験のねらい</h4>
+                                            <ol className="list-decimal pl-5 space-y-2">
+                                                <li><b>独立の法則を知る:</b> 2つの特徴が独立して受け継がれる仕組みを理解しよう！</li>
+                                                <li><b>9:3:3:1 を体感:</b> みんなのデータを集めると全体として「9：3：3：1」の比率に収束していく現象を見届けよう。</li>
+                                                <li><b>生命の神秘に気づく:</b> 複雑な生命現象の裏にある単純な数学的ルールを味わおう！</li>
+                                            </ol>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">準備するもの</h4>
+                                            <ul className="list-disc pl-5 space-y-1">
+                                                <li><b>トランプ型カード 二遺伝子Ver.（各班1セット）</b>
+                                                    <ul className="list-none pl-2 mt-2 space-y-1 font-medium text-slate-600">
+                                                        <li>・【雄カード】4枚（AB, Ab, aB, ab）</li>
+                                                        <li>・【雌カード】4枚（AB, Ab, aB, ab）</li>
+                                                        <li className="text-xs mt-1 text-slate-500">※ 表面の色を変えるなどして、雌雄を区別できるように準備してください。</li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div className="mt-6 text-center">
+                                        <button onClick={() => setShowHelp(false)} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-8 rounded-lg shadow-sm">閉じる</button>
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <strong class="text-blue-700">▶ 本時の「問い」の設定</strong>
-                                <p class="text-sm mt-1 leading-relaxed font-bold bg-slate-50 p-2 rounded border border-slate-200">「丸・黄の純系（AABB）としわ・緑の純系（aabb）を交配してできたF1（AaBb）同士を自家受精させると、孫（F2）の表現型はどんな割合で現れるか？」</p>
+                        )}
+                    </div>
+                );
+            }
+
+            return (
+                <div className="min-h-screen pb-20">
+                    {/* ▼ 変更：ヘッダーとタイマー帯を一つの固定（sticky）要素で囲む */}
+                    <div className="sticky top-0 z-40 w-full flex flex-col shadow-md bg-white">
+                        <header className="bg-slate-800 text-white p-3 md:p-4">
+                            <div className="max-w-4xl mx-auto flex flex-col lg:flex-row lg:justify-between lg:items-center gap-2 md:gap-3">
+                                <h1 className="font-bold text-lg flex items-center gap-2 whitespace-nowrap">
+                                    <i className="lucide-activity text-blue-400"></i>
+                                    LIVE集計：二遺伝子雑種
+                                </h1>
+                                <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
+                                    {classGroup === '先生モード' && (
+                                        <div className="flex items-center gap-1 bg-slate-700 p-1 pl-2 rounded-lg text-sm border border-slate-600">
+                                            <span className="font-bold text-slate-300">⏱</span>
+                                            <input 
+                                                type="number" min="1" max="60" 
+                                                value={timerMinutes} 
+                                                onChange={(e) => setTimerMinutes(e.target.value)}
+                                                className="w-10 text-center text-slate-800 rounded outline-none p-0.5 font-bold shadow-inner"
+                                            />
+                                            <span className="text-slate-300">分</span>
+                                            <button onClick={() => startTimer(timerMinutes)} className="bg-slate-600 hover:bg-blue-500 text-white px-2 py-0.5 rounded transition-colors font-bold shadow-sm ml-1">開始</button>
+                                            <button onClick={stopTimer} className="bg-slate-600 hover:bg-red-500 text-white px-2 py-0.5 rounded transition-colors font-bold shadow-sm">停止</button>
+                                        </div>
+                                    )}
+                                    
+                                    <button onClick={() => setShowHelp(true)} className="bg-slate-700 hover:bg-slate-600 text-white text-sm font-bold py-1 px-2 md:px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                        {classGroup === '先生モード' ? '？ マニュアル' : '？ ルール'}
+                                    </button>
+                                    
+                                    {classGroup !== '先生モード' && (
+                                        <div className="flex items-center gap-1 bg-slate-700 px-2 md:px-3 py-1 rounded-lg text-sm font-bold text-slate-200">
+                                            📍 {classGroup}
+                                        </div>
+                                    )}
+
+                                    {/* ▼ 変更：選択肢の文字を短くコンパクトに */}
+                                    {classGroup === '先生モード' && (
+                                        <div className="flex items-center gap-1.5 bg-slate-700 p-1 pl-2 rounded-lg text-sm">
+                                            <span className="font-bold text-slate-300">対象:</span>
+                                            <select value={filterClass} onChange={(e) => setFilterClass(e.target.value)} className="bg-slate-600 text-white font-bold py-0.5 px-1 rounded outline-none border border-slate-500 focus:border-blue-400 cursor-pointer">
+                                                <option value="simulation">デモ</option>
+                                                <option value="all">学年全体</option>
+                                                {CLASS_LIST.filter(c => c !== '先生モード').map(c => <option key={c} value={c}>{c}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {classGroup === '先生モード' && (
+                                        <>
+                                            <button onClick={handleExportCSV} className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold py-1 px-2 md:px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                                CSV
+                                            </button>
+                                            <button onClick={handleReset} className="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-2 md:px-3 rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                                                リセット
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
+                        </header>
+
+                        {/* タイマー表示バー */}
+                        <div className={`w-full text-center font-black transition-colors ${
+                            activeTimerClass === 'all' ? 'bg-slate-200 text-slate-600 py-2 md:py-3 text-xl md:text-2xl' :
+                            currentTimerState.isRunning && timeLeft > 0 && timeLeft <= 10000 ? 'bg-red-100 text-red-600 py-2 md:py-3 text-2xl md:text-3xl' :
+                            currentTimerState.isRunning && timeLeft > 10000 ? 'bg-blue-100 text-blue-800 py-2 md:py-3 text-2xl md:text-3xl' :
+                            currentTimerState.isRunning && timeLeft === 0 ? 'bg-red-500 text-white animate-pulse py-2 md:py-3 text-2xl md:text-3xl' :
+                            'bg-slate-200 text-slate-600 py-2 md:py-3 text-xl md:text-2xl'
+                        }`}>
+                            {
+                                activeTimerClass === 'all' ? '対象クラスを選択してタイマーを使用' :
+                                currentTimerState.isRunning && timeLeft > 0 ? `残り ${formatTime(timeLeft)}` :
+                                currentTimerState.isRunning && timeLeft === 0 ? '終了！！入力ストップ！' :
+                                '待機中（タイマー開始で入力可能になります）'
+                            }
                         </div>
                     </div>
 
-                    <!-- 展開 -->
-                    <div class="relative pl-6">
-                        <div class="absolute w-4 h-4 bg-blue-500 rounded-full -left-[10px] top-1.5 border-4 border-white"></div>
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-3">
-                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm font-black border border-blue-200">25分</span>
-                            【展開】TCG風カード実験（4×4）とLIVE集計
-                        </h3>
-                        <div class="mt-3 space-y-4 text-slate-700 pl-1">
-                            <div>
-                                <strong class="text-blue-700">▶ 実験ルールと「独立の法則」の体感 (5分)</strong>
-                                <ul class="list-disc pl-5 text-sm mt-1 space-y-1">
-                                    <li>2人1組にTCG風カードを配布。減数分裂時に染色体がランダムに分かれること（＝ <strong>独立の法則</strong> ）を視覚的に確認させる。</li>
-                                    <li>生徒は前回と同じ実験ポータルサイト、あるいは「二遺伝子雑種 LIVE集計」を開き、ログインする。</li>
-                                </ul>
+                    <main className="max-w-4xl mx-auto p-4 space-y-6 mt-4">
+                        <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6">
+                            <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 border-b pb-2 gap-2">
+                                <h2 className="text-lg font-bold text-slate-800">
+                                    {classGroup === '先生モード' ? (filterClass === 'simulation' ? '📊 デモ' : filterClass === 'all' ? '🏫 学年全体' : `📝 ${filterClass}`) : '🏫 学年全体'} のデータ
+                                    <span className="text-slate-400 text-sm ml-2 font-normal">（目標 9：3：3：1）</span>
+                                </h2>
+                                <span className="font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-sm border border-blue-100">総試行回数: {totalTrials} 回</span>
                             </div>
-                            <div>
-                                <strong class="text-blue-700">▶ 実験スタート＆リアルタイム集計 (20分)</strong>
-                                <ul class="list-disc pl-5 text-sm mt-1 space-y-1">
-                                    <li>互いに4種類のカードからランダムに1枚ずつ引き、2枚を組み合わせて表現型を判定し、アプリに入力する。</li>
-                                    <li>スクリーンにはクラス全体の集計を投影。バラバラだったグラフが「9.0：3.0：3.0：1.0」へと収束していく劇的な瞬間を共有する。</li>
-                                </ul>
-                                <div class="mt-2 text-sm bg-emerald-50 border border-emerald-200 p-3 rounded text-emerald-800">
-                                    🎯 <strong>ねらい:</strong> TCG風のデザインにより、生徒は「1/16の確率の『ab』同士（完全な潜性個体）を引き当てたい！」といったカードゲーム感覚で熱中し、高速で試行回数を稼ぎます。
+
+                            <div className="bg-slate-50 rounded-xl p-6 mb-6">
+                                <div className="flex h-56 items-end gap-2 md:gap-4 relative">
+                                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-10">
+                                        <div className="border-b border-slate-800 w-full h-0"></div><div className="border-b border-slate-800 w-full h-0"></div><div className="border-b border-slate-800 w-full h-0"></div><div className="border-b border-slate-800 w-full h-0"></div>
+                                    </div>
+                                    {PHENOTYPES.map((p) => {
+                                        const count = totals[p.id];
+                                        const heightPct = maxCount === 0 ? 0 : (count / maxCount) * 100;
+                                        const ratio = p.id === 'ab' ? '1.0' : getRatio(count);
+                                        return (
+                                            <div key={p.id} className="flex-1 flex flex-col items-center gap-2 h-full z-10">
+                                                <div className="text-xs md:text-sm font-bold text-slate-500 bg-white px-2 py-0.5 rounded shadow-sm border border-slate-100">比: {ratio}</div>
+                                                <div className="w-full max-w-[80px] bg-slate-200 rounded-t-md relative flex-1 flex items-end overflow-hidden shadow-inner">
+                                                    <div className={`w-full ${p.barColor} transition-all duration-700 ease-out flex items-start justify-center pt-2`} style={{ height: `${heightPct}%` }}>
+                                                        {heightPct > 15 && <span className="text-white font-bold text-xs shadow-sm">{count}</span>}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div className="flex gap-2 md:gap-4 mt-3">
+                                    {PHENOTYPES.map(p => (
+                                        <div key={p.id} className="flex-1 text-center">
+                                            <div className="font-bold text-slate-800 text-sm md:text-base">{p.label}</div>
+                                            <div className="text-xs text-slate-500">{p.name}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-center items-center gap-2 md:gap-4 text-center">
+                                {PHENOTYPES.map((p, index) => (
+                                    <React.Fragment key={p.id}>
+                                        <div className="flex flex-col items-center">
+                                            <span className={`text-xl md:text-3xl font-black ${p.id === 'ab' ? 'text-slate-400' : 'text-blue-600'}`}>{p.id === 'ab' ? '1.0' : getRatio(totals[p.id])}</span>
+                                            <span className="text-xs text-slate-400 mt-1 font-bold">目標: {p.target}</span>
+                                        </div>
+                                        {index < 3 && <span className="text-2xl font-bold text-slate-200 pb-4">:</span>}
+                                    </React.Fragment>
+                                ))}
+                            </div>
+                        </section>
+
+                        {/* ▼ 変更：先生モードで対象がシミュレーション以外の時は入力パネルを非表示にする */}
+                        {(classGroup !== '先生モード' || filterClass === 'simulation') && (
+                            <section className="bg-white rounded-2xl shadow-lg border-2 border-blue-500 p-4 md:p-6 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-2 bg-blue-500"></div>
+                                <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-2">
+                                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                        {classGroup === '先生モード' ? '🎯 デモ 入力パネル' : `🎯 ${classGroup} - ${name} の入力パネル`}
+                                    </h2>
+                                    <span className="text-sm font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">自分たちの記録: {myCounts.AB + myCounts.Ab + myCounts.aB + myCounts.ab} 回</span>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                                    {PHENOTYPES.map((p) => (
+                                        <div key={p.id} className="flex flex-col gap-2">
+                                            <button 
+                                                onClick={() => handleIncrement(p.id)} 
+                                                disabled={isInputDisabled} 
+                                                className={`${p.btnColor} ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : ''} border-2 rounded-xl p-4 flex flex-col items-center justify-center transition-all active:scale-95 shadow-sm min-h-[100px]`}
+                                            >
+                                                <span className="text-2xl font-bold">＋ {p.label}</span>
+                                                <span className="text-xs font-bold opacity-80 mt-1">{p.name}</span>
+                                            </button>
+                                            <div className="flex items-center justify-between bg-slate-50 rounded-lg p-2 border border-slate-200">
+                                                <button 
+                                                    onClick={() => handleDecrement(p.id)} 
+                                                    disabled={isInputDisabled} 
+                                                    className={`w-8 h-8 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 font-bold shadow-sm ${isInputDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:text-red-500 hover:border-red-200 transition-colors'}`}
+                                                >－</button>
+                                                
+                                                {classGroup === '先生モード' ? (
+                                                    <input type="number" min="0" value={myCounts[p.id] === 0 ? '' : myCounts[p.id]} onChange={(e) => handleDirectInput(p.id, e.target.value)} className="w-20 text-center font-bold text-xl text-slate-700 bg-white border border-blue-300 rounded focus:border-blue-500 outline-none p-1 shadow-inner" placeholder="0" />
+                                                ) : (
+                                                    <span className="font-bold text-xl text-slate-700">{myCounts[p.id]}</span>
+                                                )}
+                                                
+                                                <div className="w-8"></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
+
+                        <section className="bg-slate-50 rounded-xl p-4 border border-slate-200 shadow-inner">
+                            <div className="flex justify-between items-center mb-4 border-b border-slate-200 pb-2">
+                                <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                                    🏆 {classGroup === '先生モード' ? (filterClass === 'simulation' ? 'デモ データ' : filterClass === 'all' ? '学年全体 ランキング' : `${filterClass} ランキング`) : `ランキング`}
+                                </h3>
+                                <div className="flex gap-3 text-xs font-bold text-slate-500">
+                                    <span className="flex items-center gap-1"><span className="bg-yellow-400 text-white px-1.5 py-0.5 rounded text-[10px]">TOP</span> トップ</span>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {processedData.length === 0 ? (
+                                    <div className="col-span-full text-center text-slate-400 text-sm py-4">データがありません</div>
+                                ) : (
+                                    processedData.map(d => (
+                                        <div key={d.id} className={`relative p-3 rounded-lg text-sm border shadow-sm transition-all ${d.id === user?.uid ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-300 scale-105 z-10' : 'bg-white border-slate-200'}`}>
+                                            {classGroup === '先生モード' && d.classGroup !== '先生モード' && (
+                                                <button 
+                                                    onClick={() => handleKick(d.id, d.classGroup, d.name)}
+                                                    className="absolute -top-2 -left-2 bg-red-100 text-red-600 hover:bg-red-500 hover:text-white rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-md transition-colors z-20"
+                                                    title="この班のデータを消去して強制ログアウト"
+                                                >✕</button>
+                                            )}
+                                            {d.isTopCount && <div className="absolute -top-2 -right-2 flex gap-1"><span className="bg-yellow-400 text-white px-1.5 py-0.5 rounded text-[10px] font-bold shadow border border-yellow-500" title="最多試行回数！">TOP</span></div>}
+                                            <div className="text-xs font-bold text-blue-500 mb-0.5">{d.classGroup}</div>
+                                            <div className="font-bold text-slate-800 truncate mb-1 text-base">{d.name}</div>
+                                            <div className="flex justify-between items-end">
+                                                <div className={`text-xs font-bold px-2 py-1 rounded inline-block ${d.isTopCount ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-500'}`}>
+                                                    計 {d.total} 回
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </section>
+                    </main>
+
+                    {showHelp && (
+                        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto relative shadow-2xl">
+                                <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center">✕</button>
+                                
+                                {classGroup === '先生モード' ? (
+                                    <>
+                                        <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-blue-200 pb-2">先生モード 機能マニュアル</h2>
+                                        <div className="space-y-4 text-sm text-slate-700">
+                                            <ul className="space-y-3">
+                                                <li><b className="text-blue-600">クラス個別タイマー＆入力制限</b><br/>選択した「対象クラス」の生徒に対してのみタイマーが発動します。また、<b>生徒はタイマーが動いている時間帯しかデータを入力（＋、ー）できなくなります。</b></li>
+                                                <li><b className="text-blue-600">対象クラスの切り替え</b><br/>グラフやランキングを「学年全体」「各クラス」「デモ」に切り替えられます。<b>生徒のグラフデータに先生のデモ入力が混ざることはありません。</b></li>
+                                                <li><b className="text-blue-600">CSVダウンロード</b><br/>現在表示している対象クラスのデータをCSVファイルでダウンロードできます。Excelでの成績処理等にご活用ください。</li>
+                                                <li><b className="text-blue-600">全データリセット</b><br/>現在表示している対象クラスの全データを一括で 0 に戻します。対象が「デモ」の場合は先生の入力のみリセットします。</li>
+                                                <li><b className="text-blue-600">強制ログアウト（キック）</b><br/>各班の「✕」ボタンを押すとその班のデータを消去し、対象生徒を初期画面に強制的に戻します。（登録間違いやイタズラ対応用）</li>
+                                                <li><b className="text-blue-600">デモ用 直接入力</b><br/><b>対象を「デモ」に切り替えた時のみ</b>、先生用の入力パネルが表示され、数値を直接打ち込めます。また、ブラウザをリロードすると先生のデータは消去され、初期画面に戻ります。（過去の先生データも再ログイン時に自動で一掃されます）</li>
+                                                <li><b className="text-blue-600">ポータルとカードメーカー</b><br/><a href="./index.html" className="text-blue-500 underline hover:text-blue-700" target="_blank" rel="noopener noreferrer">デジタル教材ポータル</a>から、授業用の「TCG風カードメーカー」にアクセスし、A4用紙で生徒用のトランプ型カードを印刷できます。</li>
+                                            </ul>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h2 className="text-xl font-bold text-slate-800 mb-4 border-b border-blue-200 pb-2">📖 実験のルール</h2>
+                                        <div className="space-y-4 text-sm text-slate-700">
+                                            <h3 className="font-bold text-blue-600 text-base">独立の法則 9 : 3 : 3 : 1 を確かめよう!</h3>
+                                            <ol className="list-decimal pl-5 space-y-3">
+                                                <li><b>♂役と♀役を決め、それぞれAB, Ab, aB, ab の4枚のカード</b>を裏向きにして持ち、相手に見えないようにシャッフルする。</li>
+                                                <li>互いに相手の手札から、1枚ずつカードを引く。</li>
+                                                <li>引いた2枚のカードを組み合わせて、<b>表現型（丸・黄など）</b>を確認する。
+                                                    <ul className="list-disc pl-5 mt-2 space-y-1 text-slate-600 font-medium">
+                                                        <li><b>[AB]（丸・黄）</b>　←遺伝子型：<b>A_B_</b></li>
+                                                        <li><b>[Ab]（丸・緑）</b>　←遺伝子型：<b>A_bb</b></li>
+                                                        <li><b>[aB]（しわ・黄）</b>←遺伝子型：<b>aaB_</b></li>
+                                                        <li><b>[ab]（しわ・緑）</b>←遺伝子型：<b>aabb</b></li>
+                                                    </ul>
+                                                </li>
+                                                <li>代表者が、対応する表現型の<b>＋ボタン</b>を1回タップして入力する。<br/>
+                                                    <span className="text-xs text-slate-500 font-bold">※間違えて押してしまったら、下のマイナスを押して消す。</span>
+                                                </li>
+                                                <li>引いたカードを戻して再度シャッフルし、2〜5を繰り返す。<br/>
+                                                    <span className="text-xs text-blue-600 font-bold">（1つの班で何回やってもOK！たくさんデータを集めよう）</span>
+                                                </li>
+                                            </ol>
+                                        </div>
+                                    </>
+                                )}
+                                
+                                <div className="mt-6 text-center">
+                                    <button onClick={() => setShowHelp(false)} className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-8 rounded-lg shadow-sm">閉じる</button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- まとめ -->
-                    <div class="relative pl-6">
-                        <div class="absolute w-4 h-4 bg-blue-500 rounded-full -left-[10px] top-1.5 border-4 border-white"></div>
-                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-3">
-                            <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm font-black border border-blue-200">15分</span>
-                            【まとめ】16マスのパネットスクエアと「法則の美しさ」
-                        </h3>
-                        <div class="mt-3 space-y-3 text-slate-700 pl-1">
-                            <div>
-                                <strong class="text-blue-700">▶ 「なぜ 9:3:3:1 になるのか」の理論解説</strong>
-                                <p class="text-sm mt-1 leading-relaxed">実験の事実をふまえ、プリントの16マス（4通り×4通り）のパネットスクエアを板書で完成させる。</p>
-                            </div>
-                            <div>
-                                <strong class="text-blue-700">▶ 独立の法則の真骨頂（数学的な視点）</strong>
-                                <ul class="list-disc pl-5 text-sm mt-1 space-y-1">
-                                    <li>集計データから、「形」だけで再集計すると（9+3）：（3+1）＝12：4＝「3：1」になることを確認。</li>
-                                    <li>「色」だけで再集計しても同様に「3：1」になることを確認。</li>
-                                </ul>
-                                <p class="text-sm mt-3 font-bold bg-slate-100 p-3 rounded">
-                                    「2つの形質が混ざって複雑に見えても、それぞれは全く独立して『3:1』のルールを守っている。だから（3:1）×（3:1）＝ 9:3:3:1 になる。これが独立の法則の真の美しさである」<br>
-                                    <span class="font-normal text-slate-500">とまとめ、深い納得感へと導く。</span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
+                    )}
                 </div>
-            </section>
+            );
+        }
 
-            <!-- 4. 授業成功のポイント -->
-            <section class="bg-slate-800 text-white p-6 md:p-8 rounded-xl mt-8">
-                <h2 class="text-xl font-bold flex items-center gap-2 mb-6 border-b border-slate-600 pb-3">
-                    <i data-lucide="lightbulb" class="w-6 h-6 text-yellow-400"></i>
-                    授業成功のポイント
-                </h2>
-                <div class="space-y-6">
-                    <div>
-                        <h3 class="font-bold text-blue-300 mb-1">▶ ポータルサイト化によるシームレスな移行</h3>
-                        <p class="text-sm text-slate-300 leading-relaxed">ツール類が一つのサイトにまとまっているため、教員の事前準備が容易になるだけでなく、生徒も前回の授業でのアクセス履歴やブックマークからすぐにアプリを開くことができ、ITツールの運用によるタイムロスがなくなります。また、家庭学習での復習にも最適です。</p>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-blue-300 mb-1">▶ カードデザインによる概念の可視化と意欲向上</h3>
-                        <p class="text-sm text-slate-300 leading-relaxed">「長い染色体・短い染色体」のイラストが独立の法則の理解を助け、TCG風のレイアウトが生徒の「作業への飽き」を防ぎます。これにより、質の高い「大数の法則」の証明が短時間で完了します。</p>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-blue-300 mb-1">▶ 「3:1」の再発見</h3>
-                        <p class="text-sm text-slate-300 leading-relaxed">最後に「9:3:3:1」を分解して「3:1」に戻すことで、一遺伝子雑種と二遺伝子雑種の学習が完璧にリンクします。</p>
-                    </div>
-                </div>
-            </section>
-
-        </div>
-    </main>
-
-    <script>
-        lucide.createIcons();
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
