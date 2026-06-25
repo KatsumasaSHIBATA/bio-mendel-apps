@@ -67,6 +67,8 @@
             
             const [filterClass, setFilterClass] = useState('all');
             const [showHelp, setShowHelp] = useState(false);
+            // ▼ 追加：詳細データの展開状態を保持
+            const [expandedTeams, setExpandedTeams] = useState({});
 
             // タイマー用ステート（全クラスのタイマー状態を保持）
             const [allTimers, setAllTimers] = useState({});
@@ -647,6 +649,28 @@
                                                     計 {d.total} 回
                                                 </div>
                                             </div>
+                                            
+                                            {/* ▼ 追加：先生モードのみ詳細展開ボタン */}
+                                            {classGroup === '先生モード' && (
+                                                <div className="mt-2 pt-2 border-t border-slate-100">
+                                                    <button 
+                                                        onClick={() => setExpandedTeams(prev => ({ ...prev, [d.id]: !prev[d.id] }))} 
+                                                        className="text-[11px] font-bold text-slate-400 hover:text-slate-600 flex items-center justify-center w-full transition-colors py-1"
+                                                    >
+                                                        {expandedTeams[d.id] ? '▲ 閉じる' : '▼ 詳細データ'}
+                                                    </button>
+                                                    {expandedTeams[d.id] && (
+                                                        <div className="mt-2 text-xs bg-slate-50 p-2 rounded border border-slate-100">
+                                                            <div className="flex justify-between mb-1 text-slate-600">
+                                                                <span>AA: {d.AA||0}</span><span>Aa: {d.Aa||0}</span><span>aa: {d.aa||0}</span>
+                                                            </div>
+                                                            <div className="font-bold text-center mt-1.5 text-emerald-600 bg-emerald-50 py-0.5 rounded">
+                                                                比 {(d.aa||0)>0 ? (((d.AA||0)+(d.Aa||0))/d.aa).toFixed(1) : '-'} : 1.0
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     ))
                                 )}
@@ -669,8 +693,8 @@
                                                 <li><b className="text-emerald-600">CSVダウンロード</b><br/>現在表示している対象クラスのデータをCSVファイルでダウンロードできます。Excelでの成績処理等にご活用ください。</li>
                                                 <li><b className="text-emerald-600">全データリセット</b><br/>現在表示している対象クラスの全データを一括で 0 に戻します。対象が「デモ」の場合は先生の入力のみリセットします。</li>
                                                 <li><b className="text-emerald-600">強制ログアウト（キック）</b><br/>各班の「✕」ボタンを押すとその班のデータを消去し、対象生徒を初期画面に強制的に戻します。（登録間違いやイタズラ対応用）</li>
+                                                {/* ▼ 変更：マニュアルの記述を更新 */}
                                                 <li><b className="text-emerald-600">デモ用 直接入力</b><br/><b>対象を「デモ」に切り替えた時のみ</b>、先生用の入力パネルが表示され、数値を直接打ち込めます。また、ブラウザをリロードすると先生のデータは消去され、初期画面に戻ります。（過去の先生データも再ログイン時に自動で一掃されます）</li>
-                                                <li><b className="text-emerald-600">ポータルとカードメーカー</b><br/><a href="./index.html" className="text-blue-500 underline hover:text-blue-700" target="_blank" rel="noopener noreferrer">デジタル教材ポータル</a>から、授業用の「TCG風カードメーカー」にアクセスし、A4用紙で生徒用のトランプ型カードを印刷できます。</li>
                                             </ul>
                                         </div>
                                     </>
