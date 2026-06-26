@@ -4,18 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>二遺伝子雑種 TCG風カードメーカー</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         @media print {
             body { background: white; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
             .page-break-after-always { page-break-after: always; break-after: page; box-shadow: none !important; margin: 0 !important; background: transparent !important; }
+            /* ▼ 修正：先生のアイデア通り、A4用紙を横向き(landscape)に完全固定！ */
             @page { size: A4 landscape; margin: 0; }
         }
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Sans+JP:wght@500;700;900&display=swap');
@@ -37,17 +35,12 @@
     <script type="text/babel" data-type="module" data-presets="react-classic">
         const { useState } = React;
 
-        const SVG_ROUND = <circle cx="50" cy="50" r="42" fill="currentColor" stroke="rgba(0,0,0,0.15)" strokeWidth="3" />;
+        const SVG_ROUND = <circle cx="50" cy="50" r="42" fill="currentColor" strokeWidth="3" className="stroke-slate-300" />;
         const SVG_WRINKLED = (
             <g>
-                <path d="M50 8 C65 10 75 2 85 18 C92 30 85 42 92 55 C98 68 88 78 82 88 C75 98 60 92 48 96 C35 100 25 90 15 92 C5 95 2 80 5 65 C8 50 2 38 8 25 C15 12 28 20 38 10 C42 6 45 6 50 8 Z" fill="currentColor" stroke="rgba(0,0,0,0.15)" strokeWidth="3" strokeLinejoin="round" />
-                <path d="M 28 32 Q 42 45 32 62 M 72 25 Q 55 45 68 68 M 38 82 Q 50 65 62 82 M 45 18 Q 50 30 55 20" stroke="rgba(0,0,0,0.25)" strokeWidth="3" fill="none" strokeLinecap="round" />
+                <path d="M50 8 C65 10 75 2 85 18 C92 30 85 42 92 55 C98 68 88 78 82 88 C75 98 60 92 48 96 C35 100 25 90 15 92 C5 95 2 80 5 65 C8 50 2 38 8 25 C15 12 28 20 38 10 C42 6 45 6 50 8 Z" fill="currentColor" strokeWidth="3" strokeLinejoin="round" className="stroke-slate-300" />
+                <path d="M 28 32 Q 42 45 32 62 M 72 25 Q 55 45 68 68 M 38 82 Q 50 65 62 82 M 45 18 Q 50 30 55 20" strokeWidth="3" fill="none" strokeLinecap="round" className="stroke-slate-300" />
             </g>
-        );
-        const SVG_DNA = (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-emerald-400">
-                <path d="M2 15c6.667-6 13.333 0 20-6"/><path d="M9 22c1.798-1.598 3-4.111 3-7.5S10.798 8.598 9 7"/><path d="M15 2c-1.798 1.598-3 4.111-3 7.5S13.202 15.402 15 17"/><path d="m17 17-2.5-2.5"/><path d="m14 8-1.5-1.5"/><path d="m7 17 2.5-2.5"/><path d="m10 8 1.5-1.5"/>
-            </svg>
         );
 
         const ChromosomeDi = ({ genes }) => {
@@ -57,7 +50,7 @@
             const color2 = '#f97316';
 
             return (
-                <svg viewBox="0 0 120 160" className="drop-shadow-md z-10" style={{ width: '22mm', height: '30mm' }}>
+                <svg viewBox="0 0 120 160" className="z-10" style={{ width: '22mm', height: '30mm' }}>
                     <g transform="translate(20, 10)">
                         <rect x="0" y="0" width="30" height="140" rx="15" fill={color1} stroke="#fff" strokeWidth="2" />
                         <circle cx="15" cy="70" r="14" fill={color1} stroke="#fff" strokeWidth="2" />
@@ -76,9 +69,17 @@
             );
         };
 
-        const CardContainer = ({ children, isBack = false }) => (
-            <div className={`relative box-border ${isBack ? '' : 'bg-white'}`}
-                 style={{ width: '54mm', height: '86mm', overflow: 'hidden' }}>
+        // ▼ 修正：回転(rotate)を一切使わず、そのまま縦長のカードとして描画する！
+        const Cell = ({ children }) => (
+            <div className="relative box-border border border-dashed border-slate-300 print:border-none"
+                 style={{ width: '54mm', height: '86mm' }}>
+                {children}
+            </div>
+        );
+
+        const CardContainer = ({ children }) => (
+            <div className={`relative box-border bg-white`}
+                 style={{ width: '54mm', height: '86mm' }}>
                 {children}
             </div>
         );
@@ -91,25 +92,28 @@
 
             const isRound = genes.includes('A');
             let shape = isRound ? SVG_ROUND : SVG_WRINKLED;
-            let colorStr = isMale ? 'text-blue-200' : 'text-pink-200';
+            let colorStr = isMale ? 'text-blue-100' : 'text-pink-100';
 
             return (
                 <CardContainer>
-                    <div className={`absolute rounded-lg border-[2mm] ${borderClass} ${bgClass} flex flex-col items-center justify-center box-border shadow-inner overflow-hidden`}
+                    <div className={`absolute rounded-lg border-[2mm] ${borderClass} ${bgClass} flex flex-col items-center justify-center box-border overflow-hidden`}
                          style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
-                        <div className={`absolute inset-0 flex items-center justify-center opacity-40 ${colorStr}`}>
+                        <div className={`absolute inset-0 flex items-center justify-center ${colorStr}`}>
                             <div style={{ width: '24mm', height: '24mm' }}>
                                 <svg viewBox="0 0 100 100">{shape}</svg>
                             </div>
                         </div>
+
                         <div className={`absolute top-1 left-1.5 flex flex-col items-center ${textColor}`}>
                             <span className="font-bold leading-none" style={{ fontSize: '9px' }}>{gender}</span>
                             <span className="font-tcg font-black leading-none" style={{ fontSize: '12px' }}>{genes}</span>
                         </div>
+
                         <div className={`absolute bottom-1 right-1.5 flex flex-col items-center rotate-180 ${textColor}`}>
                             <span className="font-bold leading-none" style={{ fontSize: '9px' }}>{gender}</span>
                             <span className="font-tcg font-black leading-none" style={{ fontSize: '12px' }}>{genes}</span>
                         </div>
+
                         <div className="z-10 flex flex-col items-center mb-1 mt-2">
                             <ChromosomeDi genes={genes} />
                         </div>
@@ -118,62 +122,66 @@
             );
         };
 
-        const TitleCard = ({ title }) => (
+        const TitleCard = ({ title, subtitle, rules }) => (
             <CardContainer>
-                <div className="absolute rounded-lg border-[2mm] border-slate-700 bg-slate-100 flex flex-col items-center justify-center box-border shadow-inner overflow-hidden"
+                <div className="absolute rounded-lg border-[2mm] border-slate-700 bg-slate-50 flex flex-col items-center justify-start p-2 box-border overflow-hidden"
                      style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
-                    <div className="font-tcg font-bold text-slate-500 mb-2" style={{ fontSize: '10px' }}>MENDEL TCG</div>
-                    <div className="text-slate-400 mb-2" style={{ width: '30px', height: '30px' }}>{SVG_DNA}</div>
-                    <h2 className="font-black text-slate-800 text-center tracking-widest" style={{ fontSize: '12px' }}>
-                        {title}
+                    <h2 className="font-black text-slate-800 mt-2 mb-1 text-center leading-tight flex-shrink-0" style={{ fontSize: '11px', width: '100%' }}>
+                        {title}<br/><span className="text-emerald-600" style={{ fontSize: '9px' }}>{subtitle}</span>
                     </h2>
-                    <div className="mt-8 flex flex-col items-center">
-                        {/* ▼ 変更：「ペアNo.」に変更 */}
-                        <span className="text-slate-500 font-bold mb-1" style={{ fontSize: '8px' }}>TEAM / ペアNo.</span>
-                        <div className="bg-white border-2 border-slate-400 shadow-inner" style={{ width: '30mm', height: '10mm' }}></div>
+                    <div className="w-full border-t border-slate-300 my-1 flex-shrink-0"></div>
+                    <div className="text-slate-700 text-left w-full pl-0.5" style={{ fontSize: '7.5px', lineHeight: '1.25', wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>
+                        {rules.map((r, i) => <p key={i} style={{ margin: '0 0 2px 0' }}>• {r}</p>)}
                     </div>
                 </div>
             </CardContainer>
         );
 
+        const PairCard = () => (
+            <CardContainer>
+                <div className="absolute rounded-lg border-[2mm] border-emerald-500 bg-emerald-50 flex flex-col items-center justify-center box-border overflow-hidden"
+                     style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
+                    <h2 className="font-black text-emerald-800 text-center tracking-widest" style={{ fontSize: '12px' }}>
+                        PAIR / ペアNo.
+                    </h2>
+                    <div className="mt-6 bg-white border-2 border-slate-400" style={{ width: '35mm', height: '15mm' }}></div>
+                </div>
+            </CardContainer>
+        );
+
+        // ▼ 修正：ロゴも文字も全て消し去り、赤/青の太枠と大きな♂♀マークだけにする究極のエコデザイン
         const BackCard = ({ gender, type }) => {
-            let bgBase = 'bg-slate-800';
-            let iconBg = 'bg-slate-900';
+            let borderColor = 'border-slate-300';
+            let markColor = ''; 
             let mark = '';
             
-            if (type === 'title') {
-                bgBase = 'bg-emerald-900';
-                iconBg = 'bg-emerald-950';
+            if (type === 'title' || type === 'pair') {
+                borderColor = 'border-emerald-500';
             } else if (gender === '♂') {
-                bgBase = 'bg-slate-800';
-                iconBg = 'bg-slate-900';
+                borderColor = 'border-blue-500';
+                markColor = 'text-blue-200'; // 確実に印字される薄い青
                 mark = '♂';
             } else if (gender === '♀') {
-                bgBase = 'bg-rose-900';
-                iconBg = 'bg-rose-950';
+                borderColor = 'border-rose-500';
+                markColor = 'text-rose-200'; // 確実に印字される薄いピンク
                 mark = '♀';
             }
 
             return (
-                <CardContainer isBack={true}>
-                    <div className={`absolute top-0 left-0 w-full h-full ${bgBase} flex flex-col items-center justify-center overflow-hidden`}>
-                        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '12px 12px' }}></div>
+                <CardContainer>
+                    <div className={`absolute top-0 left-0 w-full h-full bg-white border-[3mm] ${borderColor} flex flex-col items-center justify-center overflow-hidden`}
+                         style={{ width: '54mm', height: '86mm', boxSizing: 'border-box' }}>
                         {mark && (
-                            <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+                            <div className={`absolute inset-0 flex items-center justify-center ${markColor} pointer-events-none`}>
                                 <span className="font-jp font-black" style={{ fontSize: '100px', lineHeight: 1 }}>{mark}</span>
                             </div>
                         )}
-                        <div className={`rounded-full border-2 border-emerald-400 flex items-center justify-center mb-2 z-10 ${iconBg} shadow-[0_0_15px_rgba(16,185,129,0.4)] flex-shrink-0`}
-                             style={{ width: '56px', height: '56px' }}>
-                            <div style={{ width: '24px', height: '24px' }}>{SVG_DNA}</div>
-                        </div>
-                        <div className="text-emerald-400 font-tcg font-bold tracking-[0.2em] z-10 shadow-black drop-shadow-md flex-shrink-0" style={{ fontSize: '10px' }}>MENDEL</div>
-                        <div className="text-white/40 font-tcg tracking-widest z-10 mt-1 shadow-black drop-shadow-md flex-shrink-0" style={{ fontSize: '5px' }}>GENETICS LAB</div>
                     </div>
                 </CardContainer>
             );
         };
 
+        // ▼ 修正：A4を横向きにし、そのままの縦長カードを横5列×縦2段で絶対配置する！
         const A4Page = ({ children }) => (
             <div className="bg-white shadow-xl page-break-after-always mx-auto mb-10 print:shadow-none print:mx-0 print:mb-0 box-border relative overflow-hidden"
                  style={{ width: '297mm', height: '210mm' }}>
@@ -182,7 +190,7 @@
                     const col = index % 5; 
                     const row = Math.floor(index / 5); 
                     const left = 13.5 + col * 54; 
-                    const top = 19 + row * 86;    
+                    const top = 19 + row * 86; 
                     return (
                         <div style={{ position: 'absolute', left: `${left}mm`, top: `${top}mm`, width: '54mm', height: '86mm' }}>
                             {child}
@@ -193,6 +201,13 @@
         );
 
         function App() {
+            const dihybridRules = [
+                "♂(雄)役と♀(雌)役を決める",
+                "裏向きにして互いに1枚引く",
+                "組み合わせによる表現型を入力",
+                "何回も繰り返してデータを集める"
+            ];
+
             const dihybridCards = [
                 { type: 'gene', gender: '♂', genes: 'AB' },
                 { type: 'gene', gender: '♂', genes: 'Ab' },
@@ -202,17 +217,25 @@
                 { type: 'gene', gender: '♀', genes: 'Ab' },
                 { type: 'gene', gender: '♀', genes: 'aB' },
                 { type: 'gene', gender: '♀', genes: 'ab' },
-                { type: 'title', title: "二遺伝子雑種" },
-                { type: 'title', title: "二遺伝子雑種" }
+                { type: 'pair' },
+                { type: 'title', title: "二遺伝子雑種", subtitle: "9:3:3:1 を体感!", rules: dihybridRules }
             ];
 
             const renderFront = (cards) => {
-                return cards.map((c, i) => {
-                    if (c.type === 'title') return <TitleCard key={`front-${i}`} title={c.title} />;
-                    return <GeneCard key={`front-${i}`} gender={c.gender} genes={c.genes} />;
-                });
+                return cards.map((c, i) => (
+                    <Cell key={`front-${i}`}>
+                        {c.type === 'title' ? (
+                            <TitleCard title={c.title} subtitle={c.subtitle} rules={c.rules} />
+                        ) : c.type === 'pair' ? (
+                            <PairCard />
+                        ) : (
+                            <GeneCard gender={c.gender} genes={c.genes} />
+                        )}
+                    </Cell>
+                ));
             };
 
+            // ▼ 修正：A4横向きの短辺とじ(左右開き)に対応させるため、行ごとに左右反転する
             const renderBack = (cards) => {
                 const backs = [];
                 for (let i = 0; i < 2; i++) {
@@ -220,7 +243,9 @@
                     backs.push(...row);
                 }
                 return backs.map((c, i) => (
-                    <BackCard key={`back-${i}`} gender={c.gender} type={c.type} />
+                    <Cell key={`back-${i}`}>
+                        <BackCard gender={c.gender} type={c.type} />
+                    </Cell>
                 ));
             };
 
@@ -229,7 +254,9 @@
                     <div className="no-print bg-slate-800 text-white p-4 sticky top-0 z-50 shadow-md">
                         <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
                             <h1 className="text-lg md:text-xl font-bold flex items-center gap-2">
-                                <span className="text-blue-400 w-6 h-6">{SVG_DNA}</span>
+                                <span className="text-blue-400 w-6 h-6">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-blue-400"><path d="M2 15c6.667-6 13.333 0 20-6"/><path d="M9 22c1.798-1.598 3-4.111 3-7.5S10.798 8.598 9 7"/><path d="M15 2c-1.798 1.598-3 4.111-3 7.5S13.202 15.402 15 17"/><path d="m17 17-2.5-2.5"/><path d="m14 8-1.5-1.5"/><path d="m7 17 2.5-2.5"/><path d="m10 8 1.5-1.5"/></svg>
+                                </span>
                                 二遺伝子雑種 マルチカードメーカー
                             </h1>
                             <div className="flex gap-3 w-full md:w-auto justify-center">
@@ -242,7 +269,7 @@
                         </div>
                     </div>
 
-                    <div className="no-print max-w-4xl mx-auto mt-6 mb-8 bg-white p-6 rounded-xl shadow-sm text-sm text-slate-700 border-l-4 border-blue-500">
+                    <div className="no-print max-w-4xl mx-auto mt-6 mb-8 bg-white p-6 rounded-xl shadow-sm text-sm text-slate-700 border-l-4 border-emerald-500">
                         <h3 className="font-bold text-lg mb-3 text-slate-800">🖨 印刷時の必須設定（<span className="text-rose-600">キャッシュカードサイズ 86×54mm 専用</span>）</h3>
                         <ul className="list-disc pl-5 space-y-2 font-medium bg-rose-50 p-4 rounded-lg border border-rose-200">
                             <li>用紙サイズ：<strong>A4</strong></li>
@@ -252,11 +279,11 @@
                             <li className="text-rose-700">両面印刷：<strong>「 短辺とじ 」</strong> ※長辺とじだと裏が逆さまになります！</li>
                             <li>オプション：<strong>「背景のグラフィックを印刷する」にチェック</strong></li>
                         </ul>
-                        <div className="mt-4 p-3 bg-blue-50 rounded text-xs text-blue-800 border border-blue-200 leading-relaxed">
+                        <div className="mt-4 p-3 bg-emerald-50 rounded text-xs text-emerald-800 border border-emerald-200 leading-relaxed">
                             💡 <strong>エーワンの「キャッシュカードサイズ 厚口（品番: 51164 など）」</strong>をプリンタにセットし、「短辺とじ」で両面印刷してください。印刷後、ミシン目でパリッと切り離すだけで本格的なカードが完成します！<br/>
                             🌟 <strong>さらに本格的に！：</strong> 切り離したカードを市販の<strong>「86×54mm対応スリーブ（アーケードサイズ・ミニサイズ等）」</strong>に入れると、シャッフルしやすくなり、汚れや折れを防いで何年も使い回せる最高の教具になります。<br/>
                             {/* ▼ 変更：案内文の表現も「ペアNo.」に統一 */}
-                            <span className="font-bold text-blue-700">※カード束を管理できる「ペアNo. 記入カード」2枚を含んだ構成になっています。1シートで1ペア分のセットが作れます。</span><br/>
+                            <span className="font-bold text-emerald-700">※カード束を管理できる「ペアNo. 記入カード」2枚を含んだ構成になっています。1シートで2ペア分のセットが作れます。</span><br/>
                             <span className="font-bold text-rose-600">※注意：一般的な「名刺サイズ（91×55mm）」の用紙ではミシン目と完全にズレるため使用できません！</span><br/>
                             （※最後に白紙が出力される場合は、印刷ページを「1-2」と指定してください）
                         </div>
