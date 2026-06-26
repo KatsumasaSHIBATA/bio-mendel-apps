@@ -16,7 +16,7 @@
             body { background: white; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .no-print { display: none !important; }
             .page-break-after-always { page-break-after: always; break-after: page; box-shadow: none !important; margin: 0 !important; background: transparent !important; }
-            @page { size: A4 portrait; margin: 0; }
+            @page { size: A4 landscape; margin: 0; }
         }
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Noto+Sans+JP:wght@500;700;900&display=swap');
         .font-tcg { font-family: 'Cinzel', serif; }
@@ -57,7 +57,7 @@
             const color2 = '#f97316';
 
             return (
-                <svg viewBox="0 0 120 160" className="w-[22mm] h-[30mm] drop-shadow-md z-10">
+                <svg viewBox="0 0 120 160" className="drop-shadow-md z-10" style={{ width: '22mm', height: '30mm' }}>
                     <g transform="translate(20, 10)">
                         <rect x="0" y="0" width="30" height="140" rx="15" fill={color1} stroke="#fff" strokeWidth="2" />
                         <circle cx="15" cy="70" r="14" fill={color1} stroke="#fff" strokeWidth="2" />
@@ -76,26 +76,14 @@
             );
         };
 
-        const Cell = ({ children, isBack }) => (
-            <div className="w-[86mm] h-[54mm] flex items-center justify-center relative box-border border border-dashed border-slate-300 print:border-none">
-                <div style={{ 
-                    width: '54mm', 
-                    height: '86mm', 
-                    transform: isBack ? 'rotate(-90deg)' : 'rotate(90deg)', 
-                    transformOrigin: 'center center' 
-                }}>
-                    {children}
-                </div>
-            </div>
-        );
-
         const CardContainer = ({ children, isBack = false }) => (
-            <div className={`w-[54mm] h-[86mm] relative overflow-hidden flex flex-col justify-center items-center box-border ${isBack ? '' : 'bg-white'}`}>
+            <div className={`relative box-border ${isBack ? '' : 'bg-white'}`}
+                 style={{ width: '54mm', height: '86mm', overflow: 'hidden' }}>
                 {children}
             </div>
         );
 
-        const GeneCard = ({ gender, genes, isMono }) => {
+        const GeneCard = ({ gender, genes }) => {
             const isMale = gender === '♂';
             const bgClass = isMale ? 'bg-blue-50' : 'bg-pink-50';
             const borderClass = isMale ? 'border-blue-400' : 'border-pink-400';
@@ -107,23 +95,21 @@
 
             return (
                 <CardContainer>
-                    <div className={`w-[50mm] h-[82mm] rounded-lg border-[2mm] ${borderClass} ${bgClass} relative flex flex-col items-center justify-center box-border shadow-inner`}>
+                    <div className={`absolute rounded-lg border-[2mm] ${borderClass} ${bgClass} flex flex-col items-center justify-center box-border shadow-inner overflow-hidden`}
+                         style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
                         <div className={`absolute inset-0 flex items-center justify-center opacity-40 ${colorStr}`}>
-                            <div className="w-24 h-24">
+                            <div style={{ width: '24mm', height: '24mm' }}>
                                 <svg viewBox="0 0 100 100">{shape}</svg>
                             </div>
                         </div>
-
                         <div className={`absolute top-1 left-1.5 flex flex-col items-center ${textColor}`}>
-                            <span className="text-[9px] font-bold leading-none">{gender}</span>
-                            <span className="text-xs font-tcg font-black leading-none">{genes}</span>
+                            <span className="font-bold leading-none" style={{ fontSize: '9px' }}>{gender}</span>
+                            <span className="font-tcg font-black leading-none" style={{ fontSize: '12px' }}>{genes}</span>
                         </div>
-
                         <div className={`absolute bottom-1 right-1.5 flex flex-col items-center rotate-180 ${textColor}`}>
-                            <span className="text-[9px] font-bold leading-none">{gender}</span>
-                            <span className="text-xs font-tcg font-black leading-none">{genes}</span>
+                            <span className="font-bold leading-none" style={{ fontSize: '9px' }}>{gender}</span>
+                            <span className="font-tcg font-black leading-none" style={{ fontSize: '12px' }}>{genes}</span>
                         </div>
-
                         <div className="z-10 flex flex-col items-center mb-1 mt-2">
                             <ChromosomeDi genes={genes} />
                         </div>
@@ -132,107 +118,110 @@
             );
         };
 
-        const TitleCard = ({ title, subtitle, rules }) => (
+        const TitleCard = ({ title }) => (
             <CardContainer>
-                <div className="w-[50mm] h-[82mm] rounded-lg border-[2mm] border-slate-700 bg-slate-100 relative flex flex-col items-center justify-start p-2 box-border shadow-inner">
-                    <div className="text-[8px] font-tcg font-bold text-slate-500 mt-1">MENDEL TCG</div>
-                    <div className="w-6 h-6 my-1 text-slate-400">{SVG_DNA}</div>
-                    <h2 className="font-black text-slate-800 text-[11px] mb-1 text-center leading-tight">{title}<br/><span className="text-[9px] text-emerald-600">{subtitle}</span></h2>
-                    <div className="w-full border-t border-slate-300 my-1"></div>
-                    <div className="text-[7.5px] text-slate-700 space-y-1 text-left w-full pl-0.5 leading-snug">
-                        {rules.map((r, i) => <p key={i}>• {r}</p>)}
+                <div className="absolute rounded-lg border-[2mm] border-slate-700 bg-slate-100 flex flex-col items-center justify-center box-border shadow-inner overflow-hidden"
+                     style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
+                    <div className="font-tcg font-bold text-slate-500 mb-2" style={{ fontSize: '10px' }}>MENDEL TCG</div>
+                    <div className="text-slate-400 mb-2" style={{ width: '30px', height: '30px' }}>{SVG_DNA}</div>
+                    <h2 className="font-black text-slate-800 text-center tracking-widest" style={{ fontSize: '12px' }}>
+                        {title}
+                    </h2>
+                    <div className="mt-8 flex flex-col items-center">
+                        {/* ▼ 変更：「ペアNo.」に変更 */}
+                        <span className="text-slate-500 font-bold mb-1" style={{ fontSize: '8px' }}>TEAM / ペアNo.</span>
+                        <div className="bg-white border-2 border-slate-400 shadow-inner" style={{ width: '30mm', height: '10mm' }}></div>
                     </div>
                 </div>
             </CardContainer>
         );
 
-        const BackCard = ({ type, gender }) => {
+        const BackCard = ({ gender, type }) => {
             let bgBase = 'bg-slate-800';
             let iconBg = 'bg-slate-900';
             let mark = '';
             
-            if (type === 'gene') {
-                if (gender === '♂') {
-                    bgBase = 'bg-slate-800';
-                    iconBg = 'bg-slate-900';
-                    mark = '♂';
-                } else if (gender === '♀') {
-                    bgBase = 'bg-rose-900';
-                    iconBg = 'bg-rose-950';
-                    mark = '♀';
-                }
-            } else {
+            if (type === 'title') {
                 bgBase = 'bg-emerald-900';
                 iconBg = 'bg-emerald-950';
+            } else if (gender === '♂') {
+                bgBase = 'bg-slate-800';
+                iconBg = 'bg-slate-900';
+                mark = '♂';
+            } else if (gender === '♀') {
+                bgBase = 'bg-rose-900';
+                iconBg = 'bg-rose-950';
+                mark = '♀';
             }
 
             return (
                 <CardContainer isBack={true}>
-                    <div className={`absolute inset-0 ${bgBase} flex flex-col items-center justify-center overflow-hidden`}>
+                    <div className={`absolute top-0 left-0 w-full h-full ${bgBase} flex flex-col items-center justify-center overflow-hidden`}>
                         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '12px 12px' }}></div>
                         {mark && (
-                            <div className="absolute inset-0 flex items-center justify-center opacity-10">
-                                <span className="font-jp font-black text-[100px]">{mark}</span>
+                            <div className="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+                                <span className="font-jp font-black" style={{ fontSize: '100px', lineHeight: 1 }}>{mark}</span>
                             </div>
                         )}
-                        <div className={`w-12 h-12 rounded-full border-2 border-emerald-400 flex items-center justify-center mb-2 z-10 ${iconBg} shadow-[0_0_15px_rgba(16,185,129,0.4)]`}>
-                            <div className="w-6 h-6">{SVG_DNA}</div>
+                        <div className={`rounded-full border-2 border-emerald-400 flex items-center justify-center mb-2 z-10 ${iconBg} shadow-[0_0_15px_rgba(16,185,129,0.4)] flex-shrink-0`}
+                             style={{ width: '56px', height: '56px' }}>
+                            <div style={{ width: '24px', height: '24px' }}>{SVG_DNA}</div>
                         </div>
-                        <div className="text-emerald-400 font-tcg font-bold text-[10px] tracking-[0.2em] z-10 shadow-black drop-shadow-md">MENDEL</div>
-                        <div className="text-white/40 font-tcg text-[5px] tracking-widest z-10 mt-1 shadow-black drop-shadow-md">GENETICS LAB</div>
+                        <div className="text-emerald-400 font-tcg font-bold tracking-[0.2em] z-10 shadow-black drop-shadow-md flex-shrink-0" style={{ fontSize: '10px' }}>MENDEL</div>
+                        <div className="text-white/40 font-tcg tracking-widest z-10 mt-1 shadow-black drop-shadow-md flex-shrink-0" style={{ fontSize: '5px' }}>GENETICS LAB</div>
                     </div>
                 </CardContainer>
             );
         };
 
         const A4Page = ({ children }) => (
-            <div className="w-[210mm] h-[297mm] bg-white shadow-xl flex items-center justify-center page-break-after-always mx-auto mb-10 print:shadow-none print:mx-0 print:mb-0 box-border" style={{ padding: '13.5mm 19mm' }}>
-                <div className="grid grid-cols-2 grid-rows-5 gap-0 w-full h-full">
-                    {children}
-                </div>
+            <div className="bg-white shadow-xl page-break-after-always mx-auto mb-10 print:shadow-none print:mx-0 print:mb-0 box-border relative overflow-hidden"
+                 style={{ width: '297mm', height: '210mm' }}>
+                {React.Children.map(children, (child, index) => {
+                    if (!child) return null;
+                    const col = index % 5; 
+                    const row = Math.floor(index / 5); 
+                    const left = 13.5 + col * 54; 
+                    const top = 19 + row * 86;    
+                    return (
+                        <div style={{ position: 'absolute', left: `${left}mm`, top: `${top}mm`, width: '54mm', height: '86mm' }}>
+                            {child}
+                        </div>
+                    );
+                })}
             </div>
         );
 
         function App() {
-            const dihybridRules = [
-                "♂(雄)役と♀(雌)役を決める。",
-                "裏向きにシャッフルし、互いに1枚ずつ引き合う。",
-                "組み合わせによる表現型（丸・黄など）をアプリに入力！",
-                "このカードセットで「1班分」の実験が可能です。"
-            ];
-
             const dihybridCards = [
-                { type: 'gene', gender: '♂', genes: 'AB', isMono: false },
-                { type: 'gene', gender: '♂', genes: 'Ab', isMono: false },
-                { type: 'gene', gender: '♂', genes: 'aB', isMono: false },
-                { type: 'gene', gender: '♂', genes: 'ab', isMono: false },
-                { type: 'gene', gender: '♀', genes: 'AB', isMono: false },
-                { type: 'gene', gender: '♀', genes: 'Ab', isMono: false },
-                { type: 'gene', gender: '♀', genes: 'aB', isMono: false },
-                { type: 'gene', gender: '♀', genes: 'ab', isMono: false },
-                { type: 'title', title: "二遺伝子雑種", subtitle: "9 : 3 : 3 : 1 を体感！", rules: dihybridRules },
-                { type: 'title', title: "二遺伝子雑種", subtitle: "9 : 3 : 3 : 1 を体感！", rules: dihybridRules }
+                { type: 'gene', gender: '♂', genes: 'AB' },
+                { type: 'gene', gender: '♂', genes: 'Ab' },
+                { type: 'gene', gender: '♂', genes: 'aB' },
+                { type: 'gene', gender: '♂', genes: 'ab' },
+                { type: 'gene', gender: '♀', genes: 'AB' },
+                { type: 'gene', gender: '♀', genes: 'Ab' },
+                { type: 'gene', gender: '♀', genes: 'aB' },
+                { type: 'gene', gender: '♀', genes: 'ab' },
+                { type: 'title', title: "二遺伝子雑種" },
+                { type: 'title', title: "二遺伝子雑種" }
             ];
 
             const renderFront = (cards) => {
                 return cards.map((c, i) => {
-                    let content;
-                    if (c.type === 'title') {
-                        content = <TitleCard title={c.title} subtitle={c.subtitle} rules={c.rules} />;
-                    } else {
-                        content = <GeneCard gender={c.gender} genes={c.genes} isMono={c.isMono} />;
-                    }
-                    return <Cell key={`front-${i}`} isBack={false}>{content}</Cell>;
+                    if (c.type === 'title') return <TitleCard key={`front-${i}`} title={c.title} />;
+                    return <GeneCard key={`front-${i}`} gender={c.gender} genes={c.genes} />;
                 });
             };
 
             const renderBack = (cards) => {
                 const backs = [];
-                for (let i = 0; i < 5; i++) {
-                    const row = cards.slice(i * 2, i * 2 + 2).reverse();
+                for (let i = 0; i < 2; i++) {
+                    const row = cards.slice(i * 5, i * 5 + 5).reverse();
                     backs.push(...row);
                 }
-                return backs.map((c, i) => <Cell key={`back-${i}`} isBack={true}><BackCard type={c.type} gender={c.gender} /></Cell>);
+                return backs.map((c, i) => (
+                    <BackCard key={`back-${i}`} gender={c.gender} type={c.type} />
+                ));
             };
 
             return (
@@ -253,19 +242,21 @@
                         </div>
                     </div>
 
-                    <div className="no-print max-w-3xl mx-auto mt-6 mb-8 bg-white p-6 rounded-xl shadow-sm text-sm text-slate-700 border-l-4 border-blue-500">
+                    <div className="no-print max-w-4xl mx-auto mt-6 mb-8 bg-white p-6 rounded-xl shadow-sm text-sm text-slate-700 border-l-4 border-blue-500">
                         <h3 className="font-bold text-lg mb-3 text-slate-800">🖨 印刷時の必須設定（<span className="text-rose-600">キャッシュカードサイズ 86×54mm 専用</span>）</h3>
-                        <ul className="list-disc pl-5 space-y-1.5 font-medium">
+                        <ul className="list-disc pl-5 space-y-2 font-medium bg-rose-50 p-4 rounded-lg border border-rose-200">
                             <li>用紙サイズ：<strong>A4</strong></li>
-                            <li>レイアウト：<strong>縦（ポートレイト）</strong></li>
-                            <li>倍率：<strong>100%（または「規定サイズ」「実際のサイズ」）</strong></li>
+                            <li className="text-rose-700">レイアウト：<strong>「 横 」（ランドスケープ）</strong> ※必須！</li>
+                            <li>倍率：<strong>100%（規定サイズ / 実際のサイズ）</strong></li>
                             <li>余白：<strong>なし（最小）</strong></li>
-                            <li>オプション：<strong>「背景のグラフィックを印刷する」に必ずチェック</strong></li>
+                            <li className="text-rose-700">両面印刷：<strong>「 短辺とじ 」</strong> ※長辺とじだと裏が逆さまになります！</li>
+                            <li>オプション：<strong>「背景のグラフィックを印刷する」にチェック</strong></li>
                         </ul>
                         <div className="mt-4 p-3 bg-blue-50 rounded text-xs text-blue-800 border border-blue-200 leading-relaxed">
-                            💡 <strong>エーワンの「キャッシュカードサイズ 厚口（品番: 51164 など）」</strong>をプリンタにセットし、「長辺とじ」で両面印刷してください。印刷後、ミシン目でパリッと切り離すだけで本格的なカードが完成します！<br/>
-                            {/* ▼ 追加：スリーブ推奨のアドバイス */}
-                            🌟 <strong>さらに本格的に！：</strong> 切り離したカードを市販の<strong>「86×54mm対応スリーブ（アーケードサイズ・ミニサイズ等）」</strong>に入れると、シャッフルしやすくなり、汚れや折れを防いで<strong>何年も使い回せる最高の教具</strong>になります。<br/>
+                            💡 <strong>エーワンの「キャッシュカードサイズ 厚口（品番: 51164 など）」</strong>をプリンタにセットし、「短辺とじ」で両面印刷してください。印刷後、ミシン目でパリッと切り離すだけで本格的なカードが完成します！<br/>
+                            🌟 <strong>さらに本格的に！：</strong> 切り離したカードを市販の<strong>「86×54mm対応スリーブ（アーケードサイズ・ミニサイズ等）」</strong>に入れると、シャッフルしやすくなり、汚れや折れを防いで何年も使い回せる最高の教具になります。<br/>
+                            {/* ▼ 変更：案内文の表現も「ペアNo.」に統一 */}
+                            <span className="font-bold text-blue-700">※カード束を管理できる「ペアNo. 記入カード」2枚を含んだ構成になっています。1シートで1ペア分のセットが作れます。</span><br/>
                             <span className="font-bold text-rose-600">※注意：一般的な「名刺サイズ（91×55mm）」の用紙ではミシン目と完全にズレるため使用できません！</span><br/>
                             （※最後に白紙が出力される場合は、印刷ページを「1-2」と指定してください）
                         </div>
