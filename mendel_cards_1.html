@@ -40,9 +40,8 @@
             </svg>
         );
 
-        // ▼ 変更：遺伝子の種類（A/a）によって、アプリのグラフと色をリンクさせる！
         const ChromosomeMono = ({ gene }) => {
-            const color = gene === 'A' ? '#10b981' : '#3b82f6'; // A=エメラルド, a=ブルー
+            const color = gene === 'A' ? '#10b981' : '#3b82f6'; 
             return (
                 <svg viewBox="0 0 80 160" className="z-10" style={{ width: '15mm', height: '30mm' }}>
                     <rect x="25" y="10" width="30" height="140" rx="15" fill={color} stroke="#fff" strokeWidth="2" />
@@ -72,13 +71,13 @@
             const borderClass = isMale ? 'border-blue-400' : 'border-pink-400';
             const textColor = isMale ? 'text-blue-800' : 'text-pink-800';
 
-            // ▼ 変更：背景の豆の絵（SVG）を完全に削除しました
             return (
                 <CardContainer>
                     <div className={`absolute rounded-lg border-[2mm] ${borderClass} ${bgClass} flex flex-col items-center justify-center box-border overflow-hidden`}
                          style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
 
-                        {/* ▼ 変更：四隅のインデックス（♂♀とA/a）の文字サイズを大幅に拡大！ */}
+                        {/* 背景の透かし豆イラストは完全に削除 */}
+
                         <div className={`absolute top-1.5 left-2 flex flex-col items-center ${textColor}`}>
                             <span className="font-bold leading-none mb-0.5" style={{ fontSize: '12px' }}>{gender}</span>
                             <span className="font-tcg font-black leading-none" style={{ fontSize: '16px' }}>{genes}</span>
@@ -103,7 +102,7 @@
                      style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
                     <div className="font-tcg font-bold text-slate-500 mt-1 flex-shrink-0" style={{ fontSize: '8px' }}>MENDEL TCG</div>
                     <div className="my-1 text-slate-400 flex-shrink-0" style={{ width: '24px', height: '24px' }}>{SVG_DNA}</div>
-                    <h2 className="font-black text-slate-800 mb-1 text-center leading-tight flex-shrink-0" style={{ fontSize: '11px', width: '100%' }}>
+                    <h2 className="font-black text-slate-800 mb-1 text-center leading-tight flex-shrink-0" style={{ fontSize: '10px', width: '100%' }}>
                         ペアの名前 / No.
                     </h2>
                     <div className="w-full border-t border-slate-300 my-1 flex-shrink-0"></div>
@@ -114,13 +113,13 @@
             </CardContainer>
         );
 
-        const BackCard = ({ gender, type }) => {
+        const BackCard = ({ gender, type, rules }) => {
             let borderColor = 'border-slate-300';
             let markColor = ''; 
             let mark = '';
             
-            if (type === 'pair') {
-                borderColor = 'border-slate-700'; // ペアNoの裏枠もグレーに統一
+            if (type === 'pair' || type === 'title' || type === 'portal') {
+                borderColor = 'border-slate-700'; // 裏面も表面と同じグレー(slate-700)の枠線に
             } else if (gender === '♂') {
                 borderColor = 'border-blue-500';
                 markColor = 'text-blue-200';
@@ -135,11 +134,26 @@
                 <CardContainer>
                     <div className={`absolute top-0 left-0 w-full h-full bg-white border-[3mm] ${borderColor} flex flex-col items-center justify-center overflow-hidden`}
                          style={{ width: '54mm', height: '86mm', boxSizing: 'border-box' }}>
-                        {mark && (
+                        
+                        {mark ? (
                             <div className={`absolute inset-0 flex items-center justify-center ${markColor} pointer-events-none`}>
                                 <span className="font-jp font-black" style={{ fontSize: '100px', lineHeight: 1 }}>{mark}</span>
                             </div>
-                        )}
+                        ) : (type === 'pair' || type === 'title' || type === 'portal') && rules ? (
+                            <div className="flex flex-col items-center justify-start pt-4 px-2.5 w-full h-full text-slate-700">
+                                <div className="w-6 h-6 mb-1 text-slate-400 flex-shrink-0">{SVG_DNA}</div>
+                                <h3 className="font-black text-[11px] mb-2 border-b-2 border-slate-300 pb-0.5 w-full text-center tracking-widest text-slate-800 flex-shrink-0">HOW TO PLAY</h3>
+                                <div className="text-[8px] leading-relaxed font-bold text-left w-full mt-1">
+                                    {rules.map((r, i) => (
+                                        <p key={i} className="mb-1.5 flex items-start">
+                                            <span className="text-slate-500 mr-1 flex-shrink-0">{i+1}.</span>
+                                            <span>{r}</span>
+                                        </p>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : null}
+
                     </div>
                 </CardContainer>
             );
@@ -164,6 +178,13 @@
         );
 
         function App() {
+            const monoRules = [
+                "♂(雄)役と♀(雌)役を決める。",
+                "裏向きにシャッフルし、互いに1枚ずつ引き合う。",
+                "引いた2枚の組み合わせ（AA, Aa, aa）をアプリに入力！",
+                "引いたカードを戻してシャッフルし、何度も繰り返す。"
+            ];
+
             const monoCards = [
                 { type: 'gene', gender: '♂', genes: 'A' },
                 { type: 'gene', gender: '♂', genes: 'a' },
@@ -173,8 +194,8 @@
                 { type: 'gene', gender: '♂', genes: 'a' },
                 { type: 'gene', gender: '♀', genes: 'A' },
                 { type: 'gene', gender: '♀', genes: 'a' },
-                { type: 'pair' },
-                { type: 'pair' }
+                { type: 'pair', rules: monoRules },
+                { type: 'pair', rules: monoRules }
             ];
 
             const renderFront = (cards) => {
@@ -197,7 +218,7 @@
                 }
                 return backs.map((c, i) => (
                     <Cell key={`back-${i}`}>
-                        <BackCard gender={c.gender} type={c.type} />
+                        <BackCard gender={c.gender} type={c.type} rules={c.rules} />
                     </Cell>
                 ));
             };
@@ -208,7 +229,7 @@
                         <div className="max-w-4xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
                             <h1 className="text-lg md:text-xl font-bold flex items-center gap-2">
                                 <span className="text-emerald-400 w-6 h-6">
-                                    {SVG_DNA}
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-emerald-400"><path d="M2 15c6.667-6 13.333 0 20-6"/><path d="M9 22c1.798-1.598 3-4.111 3-7.5S10.798 8.598 9 7"/><path d="M15 2c-1.798 1.598-3 4.111-3 7.5S13.202 15.402 15 17"/><path d="m17 17-2.5-2.5"/><path d="m14 8-1.5-1.5"/><path d="m7 17 2.5-2.5"/><path d="m10 8 1.5-1.5"/></svg>
                                 </span>
                                 一遺伝子雑種 マルチカードメーカー
                             </h1>
@@ -222,27 +243,26 @@
                         </div>
                     </div>
 
-                    {/* ▼ 変更：ご指定の通り、以前のわかりやすいデザインの印刷説明に復元！ */}
-                    <div className="no-print max-w-4xl mx-auto mt-6 mb-8 bg-white p-6 md:p-8 rounded-2xl shadow-md border-l-8 border-emerald-500">
-                        <h3 className="font-bold text-xl mb-5 text-slate-800 flex items-center gap-2">
+                    <div className="no-print max-w-4xl mx-auto mt-6 mb-8 bg-white p-6 md:p-8 rounded-2xl shadow-md border-[3px] border-emerald-500">
+                        <h3 className="font-bold text-lg mb-4 text-slate-800 flex items-center gap-2">
                             🖨 印刷時の必須設定（<span className="text-rose-600">キャッシュカードサイズ 86×54mm 専用</span>）
                         </h3>
                         
-                        <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 mb-5">
-                            <ul className="list-disc pl-6 space-y-2.5 font-bold text-slate-800 text-base">
-                                <li>用紙サイズ：A4</li>
-                                <li className="text-rose-600">レイアウト：<strong>「 横 」（ランドスケープ）</strong> ※必須！</li>
-                                <li>倍率：100%（規定サイズ / 実際のサイズ）</li>
-                                <li>余白：なし（最小）</li>
-                                <li className="text-rose-600">両面印刷：<strong>「 短辺とじ 」</strong> ※長辺とじだと裏が逆さまになります！</li>
-                                <li>オプション：「背景のグラフィックを印刷する」にチェック</li>
+                        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
+                            <ul className="list-disc pl-5 space-y-2 font-medium text-slate-800 text-sm md:text-base">
+                                <li>用紙サイズ：<strong>A4</strong></li>
+                                <li className="text-rose-600 font-bold">レイアウト：<strong>「 横 」（ランドスケープ）</strong> ※必須！</li>
+                                <li>倍率：<strong>100%（規定サイズ / 実際のサイズ）</strong></li>
+                                <li>余白：<strong>なし（最小）</strong></li>
+                                <li className="text-rose-600 font-bold">両面印刷：<strong>「 短辺とじ 」</strong> ※長辺とじだと裏が逆さまになります！</li>
+                                <li>オプション：<strong>「背景のグラフィックを印刷する」にチェック</strong></li>
                             </ul>
                         </div>
 
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-emerald-900 leading-relaxed text-sm font-medium space-y-2">
-                            <p>💡 エーワンの「キャッシュカードサイズ 厚口（品番: 51164 など）」をプリンタにセットし、「短辺とじ」で両面印刷してください。印刷後、ミシン目でパリッと切り離すだけで本格的なカードが完成します！</p>
-                            <p>🌟 <strong>さらに本格的に！：</strong> 切り離したカードを市販の「86×54mm対応スリーブ（アーケードサイズ・ミニサイズ等）」に入れると、シャッフルしやすくなり、汚れや折れを防いで何年も使い回せる最高の教具になります。</p>
-                            <p className="text-emerald-700 font-bold">※カード束を管理できる「ペアの名前 記入カード」2枚を含んだ構成になっています。1シートで2ペア分のセットが作れます。</p>
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-900 leading-relaxed text-sm font-medium space-y-1.5">
+                            <p>💡 <strong>エーワンの「キャッシュカードサイズ 厚口（品番: 51164 など）」</strong>をプリンタにセットし、「短辺とじ」で両面印刷してください。印刷後、ミシン目でパリッと切り離すだけで本格的なカードが完成します！</p>
+                            <p>🌟 <strong>さらに本格的に！：</strong> 切り離したカードを市販の<strong>「86×54mm対応スリーブ（アーケードサイズ・ミニサイズ等）」</strong>に入れると、シャッフルしやすくなり、汚れや折れを防いで何年も使い回せる最高の教具になります。</p>
+                            <p className="text-emerald-700 font-bold">※カード束を管理できる「ペアの名前 / No.」カード2枚を含んだ構成になっています。1シートで2ペア分のセットが作れます。</p>
                             <p className="text-rose-600 font-bold">※注意：一般的な「名刺サイズ（91×55mm）」の用紙ではミシン目と完全にズレるため使用できません！</p>
                             <p className="text-slate-500">（※最後に白紙が出力される場合は、印刷ページを「1-2」と指定してください）</p>
                         </div>
