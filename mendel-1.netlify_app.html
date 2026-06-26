@@ -342,7 +342,31 @@
                 const dataWithStats = targetData.map(d => {
                     const total = (d.AA || 0) + (d.Aa || 0) + (d.aa || 0);
                     if (total > maxTotal) maxTotal = total;
-                    return { ...d, total };
+
+                    // ▼ 追加：先生モード用の異常値・特徴検知ロジック
+                    const alerts = [];
+                    if (total === 0) {
+                        alerts.push({ icon: '💤', text: '未参加', color: 'bg-slate-200 text-slate-600 border-slate-300' });
+                    } else {
+                        // 150回以上は5分間では物理的に不可能に近い
+                        if (total >= 150 && d.classGroup !== '先生モード') {
+                            alerts.push({ icon: '⚡', text: '爆速(不正疑い)', color: 'bg-red-100 text-red-700 border-red-200' });
+                        }
+                        // 1:2:1に完全一致
+                        if (total >= 16 && (d.AA||0) === (d.aa||0) && (d.Aa||0) === (d.AA||0) * 2) {
+                            alerts.push({ icon: '🤖', text: '完璧な1:2:1', color: 'bg-purple-100 text-purple-700 border-purple-200' });
+                        } 
+                        // 均等すぎる (1:1:1)
+                        else if (total >= 15 && Math.abs((d.AA||0) - (d.Aa||0)) <= 1 && Math.abs((d.Aa||0) - (d.aa||0)) <= 1) {
+                            alerts.push({ icon: '🚨', text: '均等すぎる', color: 'bg-orange-100 text-orange-700 border-orange-200' });
+                        }
+                        // ヘテロ(Aa)が異常に多い
+                        else if (total >= 20 && (d.Aa||0) >= ((d.AA||0) + (d.aa||0)) * 3) {
+                            alerts.push({ icon: '🚨', text: 'Aaが多すぎる', color: 'bg-orange-100 text-orange-700 border-orange-200' });
+                        }
+                    }
+
+                    return { ...d, total, alerts };
                 });
                 return dataWithStats.map(d => ({
                     ...d, isTopCount: d.total > 0 && d.total === maxTotal
@@ -393,7 +417,7 @@
                         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full border-t-8 border-emerald-500 relative">
                             <button onClick={() => setShowHelp(true)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 font-bold flex items-center justify-center transition-colors font-serif italic" title="アプリの概要">i</button>
                             <h1 className="text-2xl font-bold text-center text-slate-800 mb-2">一遺伝子雑種 LIVE集計</h1>
-                            <p className="text-center text-slate-500 mb-6 text-sm">自分のクラスとペア名を入力してください</p>
+                            <p className="text-center text-slate-500 mb-6 text-sm">自分のクラスと班名を入力してください</p>
                             <form onSubmit={handleJoin} className="space-y-5">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">クラス</label>
@@ -404,7 +428,7 @@
                                 {classGroup !== '先生モード' ? (
                                     <div>
                                         <label className="block text-sm font-bold text-slate-700 mb-1">ペアの名前</label>
-                                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="例：メンデル&ネーゲリペア" className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-emerald-500 outline-none font-bold text-slate-700" required />
+                                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="例：メンデルとグレーテルペア" className="w-full px-4 py-3 rounded-lg border-2 border-slate-200 focus:border-emerald-500 outline-none font-bold text-slate-700" required />
                                     </div>
                                 ) : (
                                     <div>
@@ -458,7 +482,7 @@
 
             return (
                 <div className="min-h-screen pb-20">
-                    <div className="sticky top-0 z-40 w-full flex flex-col shadow-md">
+                    <div className="sticky top-0 z-40 w-full flex flex-col shadow-md bg-white">
                         <header className="bg-slate-800 text-white p-3 md:p-4">
                             <div className="max-w-4xl mx-auto flex flex-col lg:flex-row lg:justify-between lg:items-center gap-2 md:gap-3">
                                 <h1 className="font-bold text-lg flex items-center gap-2 whitespace-nowrap">
@@ -633,7 +657,11 @@
                                     <div className="col-span-full text-center text-slate-400 text-sm py-4">データがありません</div>
                                 ) : (
                                     processedData.map(d => (
-                                        <div key={d.id} className={`relative p-3 rounded-lg text-sm border shadow-sm transition-all ${d.id === user?.uid ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-300 scale-105 z-10' : 'bg-white border-slate-200'}`}>
+                                        // ▼ 変更：0回(未参加)の班はグレーアウトさせる
+                                        <div key={d.id} className={`relative p-3 rounded-lg text-sm border shadow-sm transition-all ${
+                                            d.id === user?.uid ? 'bg-emerald-50 border-emerald-300 ring-2 ring-emerald-300 scale-105 z-10' : 
+                                            (d.total === 0 ? 'bg-slate-100 border-slate-200 opacity-60 grayscale' : 'bg-white border-slate-200')
+                                        }`}>
                                             {classGroup === '先生モード' && d.classGroup !== '先生モード' && (
                                                 <button 
                                                     onClick={() => handleKick(d.id, d.classGroup, d.name)}
@@ -645,10 +673,21 @@
                                             <div className="text-xs font-bold text-emerald-500 mb-0.5">{d.classGroup}</div>
                                             <div className="font-bold text-slate-800 truncate mb-1 text-base">{d.name}</div>
                                             <div className="flex justify-between items-end">
-                                                <div className={`text-xs font-bold px-2 py-1 rounded inline-block ${d.isTopCount ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-100 text-slate-500'}`}>
+                                                <div className={`text-xs font-bold px-2 py-1 rounded inline-block ${d.isTopCount ? 'bg-yellow-100 text-yellow-800' : 'bg-slate-200 text-slate-600'}`}>
                                                     計 {d.total} 回
                                                 </div>
                                             </div>
+
+                                            {/* ▼ 追加：先生モード時のみ、検知したアラートバッジを表示 */}
+                                            {classGroup === '先生モード' && d.alerts && d.alerts.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-2">
+                                                    {d.alerts.map((al, idx) => (
+                                                        <span key={idx} className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${al.color}`}>
+                                                            {al.icon} {al.text}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
                                             
                                             {/* ▼ 追加：先生モードのみ詳細展開ボタン */}
                                             {classGroup === '先生モード' && (
@@ -693,7 +732,6 @@
                                                 <li><b className="text-emerald-600">CSVダウンロード</b><br/>現在表示している対象クラスのデータをCSVファイルでダウンロードできます。Excelでの成績処理等にご活用ください。</li>
                                                 <li><b className="text-emerald-600">全データリセット</b><br/>現在表示している対象クラスの全データを一括で 0 に戻します。対象が「デモ」の場合は先生の入力のみリセットします。</li>
                                                 <li><b className="text-emerald-600">強制ログアウト（キック）</b><br/>各班の「✕」ボタンを押すとその班のデータを消去し、対象生徒を初期画面に強制的に戻します。（登録間違いやイタズラ対応用）</li>
-                                                {/* ▼ 変更：マニュアルの記述を更新 */}
                                                 <li><b className="text-emerald-600">デモ用 直接入力</b><br/><b>対象を「デモ」に切り替えた時のみ</b>、先生用の入力パネルが表示され、数値を直接打ち込めます。また、ブラウザをリロードすると先生のデータは消去され、初期画面に戻ります。（過去の先生データも再ログイン時に自動で一掃されます）</li>
                                             </ul>
                                         </div>
