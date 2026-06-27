@@ -34,13 +34,6 @@
     <script type="text/babel" data-type="module" data-presets="react-classic">
         const { useState } = React;
 
-        const SVG_ROUND = <circle cx="50" cy="50" r="42" fill="currentColor" strokeWidth="3" className="stroke-slate-300" />;
-        const SVG_WRINKLED = (
-            <g>
-                <path d="M50 8 C65 10 75 2 85 18 C92 30 85 42 92 55 C98 68 88 78 82 88 C75 98 60 92 48 96 C35 100 25 90 15 92 C5 95 2 80 5 65 C8 50 2 38 8 25 C15 12 28 20 38 10 C42 6 45 6 50 8 Z" fill="currentColor" strokeWidth="3" strokeLinejoin="round" className="stroke-slate-300" />
-                <path d="M 28 32 Q 42 45 32 62 M 72 25 Q 55 45 68 68 M 38 82 Q 50 65 62 82 M 45 18 Q 50 30 55 20" strokeWidth="3" fill="none" strokeLinecap="round" className="stroke-slate-300" />
-            </g>
-        );
         const SVG_DNA = (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-current">
                 <path d="M2 15c6.667-6 13.333 0 20-6"/><path d="M9 22c1.798-1.598 3-4.111 3-7.5S10.798 8.598 9 7"/><path d="M15 2c-1.798 1.598-3 4.111-3 7.5S13.202 15.402 15 17"/><path d="m17 17-2.5-2.5"/><path d="m14 8-1.5-1.5"/><path d="m7 17 2.5-2.5"/><path d="m10 8 1.5-1.5"/>
@@ -78,18 +71,10 @@
             const borderClass = isMale ? 'border-blue-400' : 'border-pink-400';
             const textColor = isMale ? 'text-blue-800' : 'text-pink-800';
 
-            let shape = genes === 'A' ? SVG_ROUND : SVG_WRINKLED;
-            let colorStr = isMale ? 'text-blue-100' : 'text-pink-100';
-
             return (
                 <CardContainer>
                     <div className={`absolute rounded-lg border-[2mm] ${borderClass} ${bgClass} flex flex-col items-center justify-center box-border overflow-hidden`}
                          style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
-                        <div className={`absolute inset-0 flex items-center justify-center ${colorStr}`}>
-                            <div style={{ width: '24mm', height: '24mm' }}>
-                                <svg viewBox="0 0 100 100">{shape}</svg>
-                            </div>
-                        </div>
 
                         <div className={`absolute top-1.5 left-2 flex flex-col items-center ${textColor}`}>
                             <span className="font-bold leading-none mb-0.5" style={{ fontSize: '12px' }}>{gender}</span>
