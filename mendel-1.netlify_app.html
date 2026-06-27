@@ -17,6 +17,7 @@
 <body class="bg-slate-50">
     <div id="root"></div>
 
+    <!-- Babel設定：自動ランタイムによるエラーを回避するためclassicモードを登録 -->
     <script>
         Babel.registerPreset('react-classic', {
             presets: [
@@ -25,6 +26,7 @@
         });
     </script>
 
+    <!-- アプリケーションコード -->
     <script type="text/babel" data-type="module" data-presets="react-classic">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -32,6 +34,7 @@
         
         const { useState, useEffect, useMemo, useRef } = React;
 
+        // 管理者パスワード設定
         const ADMIN_PASSWORD = "9331";
 
         const isCanvasEnv = typeof __firebase_config !== 'undefined' && typeof __app_id !== 'undefined';
@@ -440,6 +443,18 @@
                                                 <li><b>大数の法則を体感:</b> 班のデータとクラス全員のデータを比べ、全体データが「3：1」に近づいていく美しさを確かめよう。</li>
                                                 <li><b>メンデルのすごさを知る:</b> 1人で約3万回も実験したメンデルの熱意を感じてみよう！</li>
                                             </ol>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded inline-block mb-2">準備するもの</h4>
+                                            <ul className="list-disc pl-5 space-y-1">
+                                                <li><b>トランプ型カード（各班1セット）</b>
+                                                    <ul className="list-none pl-2 mt-2 space-y-1 font-medium text-slate-600">
+                                                        <li>・【雄カード】2枚（A, a）</li>
+                                                        <li>・【雌カード】2枚（A, a）</li>
+                                                        <li className="text-xs mt-1 text-slate-500">※ 表面の色を変えるなどして、雌雄を区別できるように準備してください。</li>
+                                                    </ul>
+                                                </li>
+                                            </ul>
                                         </div>
                                     </div>
                                     <div className="mt-6 text-center">
