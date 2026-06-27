@@ -34,6 +34,13 @@
     <script type="text/babel" data-type="module" data-presets="react-classic">
         const { useState } = React;
 
+        const SVG_ROUND = <circle cx="50" cy="50" r="42" fill="currentColor" strokeWidth="3" className="stroke-slate-300" />;
+        const SVG_WRINKLED = (
+            <g>
+                <path d="M50 8 C65 10 75 2 85 18 C92 30 85 42 92 55 C98 68 88 78 82 88 C75 98 60 92 48 96 C35 100 25 90 15 92 C5 95 2 80 5 65 C8 50 2 38 8 25 C15 12 28 20 38 10 C42 6 45 6 50 8 Z" fill="currentColor" strokeWidth="3" strokeLinejoin="round" className="stroke-slate-300" />
+                <path d="M 28 32 Q 42 45 32 62 M 72 25 Q 55 45 68 68 M 38 82 Q 50 65 62 82 M 45 18 Q 50 30 55 20" strokeWidth="3" fill="none" strokeLinecap="round" className="stroke-slate-300" />
+            </g>
+        );
         const SVG_DNA = (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-current">
                 <path d="M2 15c6.667-6 13.333 0 20-6"/><path d="M9 22c1.798-1.598 3-4.111 3-7.5S10.798 8.598 9 7"/><path d="M15 2c-1.798 1.598-3 4.111-3 7.5S13.202 15.402 15 17"/><path d="m17 17-2.5-2.5"/><path d="m14 8-1.5-1.5"/><path d="m7 17 2.5-2.5"/><path d="m10 8 1.5-1.5"/>
@@ -71,12 +78,18 @@
             const borderClass = isMale ? 'border-blue-400' : 'border-pink-400';
             const textColor = isMale ? 'text-blue-800' : 'text-pink-800';
 
+            let shape = genes === 'A' ? SVG_ROUND : SVG_WRINKLED;
+            let colorStr = isMale ? 'text-blue-100' : 'text-pink-100';
+
             return (
                 <CardContainer>
                     <div className={`absolute rounded-lg border-[2mm] ${borderClass} ${bgClass} flex flex-col items-center justify-center box-border overflow-hidden`}
                          style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
-
-                        {/* 背景の透かし豆イラストは完全に削除 */}
+                        <div className={`absolute inset-0 flex items-center justify-center ${colorStr}`}>
+                            <div style={{ width: '24mm', height: '24mm' }}>
+                                <svg viewBox="0 0 100 100">{shape}</svg>
+                            </div>
+                        </div>
 
                         <div className={`absolute top-1.5 left-2 flex flex-col items-center ${textColor}`}>
                             <span className="font-bold leading-none mb-0.5" style={{ fontSize: '12px' }}>{gender}</span>
@@ -102,7 +115,7 @@
                      style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
                     <div className="font-tcg font-bold text-slate-500 mt-1 flex-shrink-0" style={{ fontSize: '8px' }}>MENDEL TCG</div>
                     <div className="my-1 text-slate-400 flex-shrink-0" style={{ width: '24px', height: '24px' }}>{SVG_DNA}</div>
-                    <h2 className="font-black text-slate-800 mb-1 text-center leading-tight flex-shrink-0" style={{ fontSize: '10px', width: '100%' }}>
+                    <h2 className="font-black text-slate-800 mb-1 text-center leading-tight flex-shrink-0" style={{ fontSize: '11px', width: '100%' }}>
                         ペアの名前 / No.
                     </h2>
                     <div className="w-full border-t border-slate-300 my-1 flex-shrink-0"></div>
@@ -118,29 +131,29 @@
             let markColor = ''; 
             let mark = '';
             
-            if (type === 'pair' || type === 'title' || type === 'portal') {
-                borderColor = 'border-slate-700'; // 裏面も表面と同じグレー(slate-700)の枠線に
+            if (type === 'pair' || type === 'title') {
+                borderColor = 'border-slate-700'; 
             } else if (gender === '♂') {
-                borderColor = 'border-blue-500';
+                borderColor = 'border-blue-400'; 
                 markColor = 'text-blue-200';
                 mark = '♂';
             } else if (gender === '♀') {
-                borderColor = 'border-rose-500';
-                markColor = 'text-rose-200';
+                borderColor = 'border-pink-400'; 
+                markColor = 'text-pink-200';
                 mark = '♀';
             }
 
             return (
                 <CardContainer>
-                    <div className={`absolute top-0 left-0 w-full h-full bg-white border-[3mm] ${borderColor} flex flex-col items-center justify-center overflow-hidden`}
-                         style={{ width: '54mm', height: '86mm', boxSizing: 'border-box' }}>
+                    <div className={`absolute rounded-lg border-[2mm] ${borderColor} bg-white flex flex-col items-center justify-center overflow-hidden`}
+                         style={{ top: '2mm', left: '2mm', width: '50mm', height: '82mm' }}>
                         
                         {mark ? (
                             <div className={`absolute inset-0 flex items-center justify-center ${markColor} pointer-events-none`}>
                                 <span className="font-jp font-black" style={{ fontSize: '100px', lineHeight: 1 }}>{mark}</span>
                             </div>
-                        ) : (type === 'pair' || type === 'title' || type === 'portal') && rules ? (
-                            <div className="flex flex-col items-center justify-start pt-4 px-2.5 w-full h-full text-slate-700">
+                        ) : (type === 'pair' || type === 'title') && rules ? (
+                            <div className="flex flex-col items-center justify-start pt-4 px-2.5 w-full h-full text-slate-700 bg-white z-10">
                                 <div className="w-6 h-6 mb-1 text-slate-400 flex-shrink-0">{SVG_DNA}</div>
                                 <h3 className="font-black text-[11px] mb-2 border-b-2 border-slate-300 pb-0.5 w-full text-center tracking-widest text-slate-800 flex-shrink-0">HOW TO PLAY</h3>
                                 <div className="text-[8px] leading-relaxed font-bold text-left w-full mt-1">
@@ -160,7 +173,7 @@
         };
 
         const A4Page = ({ children }) => (
-            <div className="bg-white shadow-xl page-break-after-always mx-auto mb-10 print:shadow-none print:mx-0 print:mb-0 box-border relative overflow-hidden"
+            <div className="bg-white shadow-xl page-break-after-always mx-auto mb-10 print:shadow-none print:mx-0 print:mb-0 box-border relative overflow-hidden print:w-[297mm] print:h-[210mm]"
                  style={{ width: '297mm', height: '210mm' }}>
                 {React.Children.map(children, (child, index) => {
                     if (!child) return null;
@@ -243,25 +256,25 @@
                         </div>
                     </div>
 
-                    <div className="no-print max-w-4xl mx-auto mt-6 mb-8 bg-white p-6 md:p-8 rounded-2xl shadow-md border-[3px] border-emerald-500">
-                        <h3 className="font-bold text-lg mb-4 text-slate-800 flex items-center gap-2">
+                    <div className="no-print max-w-4xl mx-auto mt-6 mb-8 bg-white p-6 md:p-8 rounded-2xl shadow-md border-l-8 border-emerald-500">
+                        <h3 className="font-bold text-xl mb-5 text-slate-800 flex items-center gap-2">
                             🖨 印刷時の必須設定（<span className="text-rose-600">キャッシュカードサイズ 86×54mm 専用</span>）
                         </h3>
                         
-                        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 mb-4">
-                            <ul className="list-disc pl-5 space-y-2 font-medium text-slate-800 text-sm md:text-base">
-                                <li>用紙サイズ：<strong>A4</strong></li>
-                                <li className="text-rose-600 font-bold">レイアウト：<strong>「 横 」（ランドスケープ）</strong> ※必須！</li>
-                                <li>倍率：<strong>100%（規定サイズ / 実際のサイズ）</strong></li>
-                                <li>余白：<strong>なし（最小）</strong></li>
-                                <li className="text-rose-600 font-bold">両面印刷：<strong>「 短辺とじ 」</strong> ※長辺とじだと裏が逆さまになります！</li>
-                                <li>オプション：<strong>「背景のグラフィックを印刷する」にチェック</strong></li>
+                        <div className="bg-rose-50 border border-rose-200 rounded-xl p-5 mb-5">
+                            <ul className="list-disc pl-6 space-y-2.5 font-bold text-slate-800 text-base">
+                                <li>用紙サイズ：A4</li>
+                                <li className="text-rose-600">レイアウト：<strong>「 横 」（ランドスケープ）</strong> ※必須！</li>
+                                <li>倍率：100%（規定サイズ / 実際のサイズ）</li>
+                                <li>余白：なし（最小）</li>
+                                <li className="text-rose-600">両面印刷：<strong>「 短辺とじ 」</strong> ※長辺とじだと裏が逆さまになります！</li>
+                                <li>オプション：「背景のグラフィックを印刷する」にチェック</li>
                             </ul>
                         </div>
 
-                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-emerald-900 leading-relaxed text-sm font-medium space-y-1.5">
-                            <p>💡 <strong>エーワンの「キャッシュカードサイズ 厚口（品番: 51164 など）」</strong>をプリンタにセットし、「短辺とじ」で両面印刷してください。印刷後、ミシン目でパリッと切り離すだけで本格的なカードが完成します！</p>
-                            <p>🌟 <strong>さらに本格的に！：</strong> 切り離したカードを市販の<strong>「86×54mm対応スリーブ（アーケードサイズ・ミニサイズ等）」</strong>に入れると、シャッフルしやすくなり、汚れや折れを防いで何年も使い回せる最高の教具になります。</p>
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 text-emerald-900 leading-relaxed text-sm font-medium space-y-2">
+                            <p>💡 エーワンの「キャッシュカードサイズ 厚口（品番: 51164 など）」をプリンタにセットし、「短辺とじ」で両面印刷してください。印刷後、ミシン目でパリッと切り離すだけで本格的なカードが完成します！</p>
+                            <p>🌟 <strong>さらに本格的に！：</strong> 切り離したカードを市販の「86×54mm対応スリーブ（アーケードサイズ・ミニサイズ等）」に入れると、シャッフルしやすくなり、汚れや折れを防いで何年も使い回せる最高の教具になります。</p>
                             <p className="text-emerald-700 font-bold">※カード束を管理できる「ペアの名前 / No.」カード2枚を含んだ構成になっています。1シートで2ペア分のセットが作れます。</p>
                             <p className="text-rose-600 font-bold">※注意：一般的な「名刺サイズ（91×55mm）」の用紙ではミシン目と完全にズレるため使用できません！</p>
                             <p className="text-slate-500">（※最後に白紙が出力される場合は、印刷ページを「1-2」と指定してください）</p>
